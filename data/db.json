@@ -1,0 +1,216 @@
+{
+  "users": [
+    {
+      "id": "u-admin-1",
+      "companyId": "company-1",
+      "username": "admin",
+      "password": "bomberos123",
+      "nombre": "Administrador",
+      "role": "admin",
+      "blocked": false,
+      "email": "",
+      "phone": "",
+      "createdAt": "",
+      "lastLoginAt": "2026-04-13T03:52:43.115Z",
+      "modulePermissions": {
+        "canWriteInventory": false,
+        "canWriteGuardBook": false,
+        "canWriteMedicalRecords": false,
+        "canWriteVolunteerCourses": false,
+        "canWriteDayOrders": false,
+        "canWriteVehicles": false,
+        "canWriteUniforms": false,
+        "canGenerateReports": false,
+        "canManageUsers": false
+      }
+    },
+    {
+      "id": "8b57752e-df9c-4cd6-9f60-c62b8c326442",
+      "companyId": "company-1",
+      "nombre": "Operador Prueba",
+      "username": "oper1",
+      "password": "hola123",
+      "role": "voluntario",
+      "blocked": false,
+      "email": "",
+      "phone": "",
+      "createdAt": "",
+      "lastLoginAt": "",
+      "modulePermissions": {
+        "canWriteInventory": false,
+        "canWriteGuardBook": false,
+        "canWriteMedicalRecords": false,
+        "canWriteVolunteerCourses": false,
+        "canWriteDayOrders": false,
+        "canWriteVehicles": false,
+        "canWriteUniforms": false,
+        "canGenerateReports": false,
+        "canManageUsers": false
+      }
+    },
+    {
+      "id": "a6cb51bc-9be4-4272-9a15-ee75b8bd92e7",
+      "companyId": "company-1",
+      "nombre": "Vol Test",
+      "username": "vol_test_62794",
+      "password": "clave123",
+      "role": "voluntario",
+      "blocked": false,
+      "email": "",
+      "phone": "",
+      "createdAt": "2026-04-13T03:28:55.963Z",
+      "lastLoginAt": "2026-04-13T03:28:55.966Z",
+      "modulePermissions": {
+        "canWriteInventory": true,
+        "canWriteGuardBook": false,
+        "canWriteMedicalRecords": false,
+        "canWriteVolunteerCourses": true,
+        "canWriteDayOrders": false,
+        "canWriteVehicles": false,
+        "canWriteUniforms": true,
+        "canGenerateReports": true,
+        "canManageUsers": false
+      }
+    }
+  ],
+  "inventory": [
+    {
+      "id": "item-demo-1",
+      "companyId": "company-1",
+      "nombre": "Botiquín avanzado",
+      "categoria": "Médico",
+      "cantidad": 2,
+      "minimo": 3,
+      "estado": "En Servicio",
+      "ubicacion": "Unidad R-2",
+      "notas": "Reponer vendas estériles.",
+      "fechaVencimiento": "2026-05-20",
+      "actualizado": "2026-04-12T12:00:00.000Z"
+    }
+  ],
+  "guardBook": [
+    {
+      "id": "241cc425-e26c-459c-a46a-f46bf28df71a",
+      "companyId": "company-1",
+      "fechaTurno": "2026-04-12",
+      "turno": "Noche",
+      "tipo": "Evento",
+      "descripcion": "Salida preventiva por alarma comunitaria.",
+      "recurso": "Unidad R-2",
+      "autorId": "u-admin-1",
+      "autorNombre": "Administrador",
+      "creadoEn": "2026-04-12T23:29:25.099Z"
+    }
+  ],
+  "medicalRecords": [
+    {
+      "id": "dd4f1d58-b77b-4441-a8fd-5134dd22b534",
+      "companyId": "company-1",
+      "voluntarioNombre": "Juan Perez",
+      "grupoSanguineo": "O+",
+      "alergiasEnc": "NiM3So/YWPw17AEl.Lv7SUJBGDOmN1ljOqjNAiw==.w12Z+/mq5A==",
+      "enfermedadesEnc": "Enzir4a4bvCA+6+v.jIAlZGkPyQMdYgIFP7Sh1Q==.un/chA==",
+      "medicamentosEnc": "Rk28T3LXI+8Ggg2b.aAJ8DTEhFv6FEFnPpxSAYA==.lmgPfBpicoT3wg==",
+      "contactoEmergenciaNombreEnc": "le7+dlKY+OZnY+NT.i9a9XM+onrks+vM/GKDGVw==.OkceVNIWD2tG",
+      "contactoEmergenciaTelefonoEnc": "No8Jm8gCNfJCG+OM.w8R1S3n0BMxO3MKaoKIrmQ==.W8UseoXgpVHKTN9CAnhnKcz+",
+      "contactoEmergenciaRelacionEnc": "T3rT3Yf4tFFmlcIL.Eqf0vejXMMf5JnJlohbywA==.SQUNifk=",
+      "actualizadoEn": "2026-04-13T00:00:35.458Z",
+      "actualizadoPor": "Administrador"
+    }
+  ],
+  "volunteerCourses": [
+    {
+      "id": "e903bcfa-2aa3-4f6a-995b-71e00c2fa26a",
+      "companyId": "company-1",
+      "voluntarioNombre": "Carlos Diaz",
+      "curso": "Rescate vehicular",
+      "institucion": "Academia Nacional de Bomberos",
+      "fechaInicio": "2026-03-10",
+      "fechaFin": "2026-03-15",
+      "certificacion": "Operador de rescate nivel I",
+      "horasCapacitacion": 40,
+      "actualizadoEn": "2026-04-13T00:07:56.401Z",
+      "actualizadoPor": "Administrador"
+    }
+  ],
+  "dayOrders": [
+    {
+      "id": "39a5c01a-8bf6-4ad6-bbb4-5e32c4543f9d",
+      "companyId": "company-1",
+      "fecha": "2026-04-12",
+      "tipo": "Disposicion",
+      "titulo": "Redistribucion de guardias",
+      "contenido": "Se ajustan guardias del turno noche por cobertura de evento comunal.",
+      "firmadoPor": "Capitan Operativo",
+      "publicado": true,
+      "actualizadoEn": "2026-04-13T02:11:16.903Z",
+      "actualizadoPor": "Administrador"
+    }
+  ],
+  "vehicles": [
+    {
+      "id": "ff2d3f8f-e1f8-4937-8dee-4571ec0e98b4",
+      "companyId": "company-1",
+      "codigo": "M-2",
+      "patente": "AC456EF",
+      "marcaModelo": "Mercedes Atego 1726",
+      "anio": 2020,
+      "kilometraje": 45210,
+      "estadoOperativo": "Disponible",
+      "ultimaMantencion": "2026-03-20",
+      "proximaMantencionKm": 50000,
+      "revisionTecnicaVencimiento": "2026-11-30",
+      "observaciones": "Unidad de apoyo operativo",
+      "actualizadoEn": "2026-04-13T02:44:06.962Z",
+      "actualizadoPor": "Administrador"
+    },
+    {
+      "id": "1489fffe-9612-43b8-84a2-f081bc9f3805",
+      "companyId": "company-1",
+      "codigo": "M-ALERT",
+      "patente": "ZZ999ZZ",
+      "marcaModelo": "Test Alert",
+      "anio": 2019,
+      "kilometraje": 99800,
+      "estadoOperativo": "Fuera de Servicio",
+      "ultimaMantencion": "2026-01-10",
+      "proximaMantencionKm": 99000,
+      "revisionTecnicaVencimiento": "2026-04-10",
+      "observaciones": "Prueba alertas",
+      "actualizadoEn": "2026-04-13T02:46:27.988Z",
+      "actualizadoPor": "Administrador"
+    }
+  ],
+  "uniformInventory": [
+    {
+      "id": "e5ca8f58-5b43-4ddc-8c30-f7ae502cd0f6",
+      "companyId": "company-1",
+      "voluntarioNombre": "Juan Perez",
+      "prenda": "Pantalon estructural",
+      "talla": "L",
+      "cantidad": 1,
+      "tipoMovimiento": "Entrega",
+      "estadoPrenda": "En Uso",
+      "fechaMovimiento": "2026-04-12",
+      "fechaVencimiento": "2026-12-12",
+      "observaciones": "Entrega inicial EPP",
+      "actualizadoEn": "2026-04-13T02:51:28.040Z",
+      "actualizadoPor": "Administrador"
+    },
+    {
+      "id": "fe459680-4a22-4735-bbdf-48eb2517b038",
+      "companyId": "company-1",
+      "voluntarioNombre": "Mario Gomez",
+      "prenda": "Casco forestal",
+      "talla": "M",
+      "cantidad": 1,
+      "tipoMovimiento": "Entrega",
+      "estadoPrenda": "Fuera de Servicio",
+      "fechaMovimiento": "2026-04-12",
+      "fechaVencimiento": "2026-04-11",
+      "observaciones": "Prueba alerta uniforme",
+      "actualizadoEn": "2026-04-13T02:55:12.544Z",
+      "actualizadoPor": "Administrador"
+    }
+  ]
+}

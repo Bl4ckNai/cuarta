@@ -1,0 +1,956 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Control de Inventario | Compañía de Bomberos</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;700;800&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="bg-layer" aria-hidden="true"></div>
+
+  <nav class="navbar navbar-expand-lg navbar-dark fire-navbar hidden" id="mainMenu">
+    <div class="container-fluid nav-wrap">
+      <a class="navbar-brand d-flex align-items-center gap-2" href="#" id="menuHomeBtn">
+        <img class="brand-logo" src="logo.png" alt="Logo compania" />
+        <span class="brand-text">Cuarta 4°ta</span>
+      </a>
+
+      <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navbarBomberos" aria-controls="navbarBomberos" aria-expanded="false" aria-label="Abrir navegación">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+
+      <div class="collapse navbar-collapse" id="navbarBomberos">
+        <ul class="navbar-nav mb-2 mb-lg-0 align-items-lg-center gap-lg-2">
+          <li class="nav-item">
+            <a class="nav-link" href="#" id="menuOpenInventory">Inventario</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="#" id="menuOpenGuard">Libro de Guardia</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="#" id="menuOpenMedical">Fichas Medicas</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="#" id="menuOpenCourses">Cursos</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="#" id="menuOpenDayOrders">Ordenes del Dia</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link hidden" href="#" id="menuOpenReports">Pdf</a>
+          </li>
+           <li class="nav-item">
+             <a class="nav-link" href="#" id="menuOpenVehicles">Carros</a>
+           </li>
+           <li class="nav-item">
+             <a class="nav-link" href="#" id="menuOpenUniforms">Inventario de Uniformes</a>
+           </li>
+          <li class="nav-item">
+            <a class="nav-link hidden" href="#" id="menuOpenUsers">Gestión de Usuarios</a>
+          </li>
+        </ul>
+      </div>
+
+      <div class="navbar-user-menu">
+        <div class="nav-item dropdown">
+          <button class="nav-link dropdown-toggle" id="userMenuToggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+            👤 <span id="userInfoNav">Usuario</span>
+          </button>
+          <ul class="dropdown-menu dropdown-menu-end" id="userDropdownMenu" aria-labelledby="userMenuToggle">
+            <li id="userInfoDropdown" class="dropdown-header">Usuario</li>
+            <li><hr class="dropdown-divider"></li>
+            <li><button id="manageUsersBtnDropdown" class="dropdown-item hidden">Gestión de usuarios</button></li>
+            <li><button id="themeToggleBtnDropdown" class="dropdown-item">🌙 Cambiar tema</button></li>
+            <li><hr class="dropdown-divider"></li>
+            <li><button id="logoutBtnDropdown" class="dropdown-item">Cerrar sesión</button></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <section class="auth-shell" id="authShell">
+    <div class="auth-card panel">
+      <p class="eyebrow dark">Acceso Seguro</p>
+      <h2>Ingreso de Personal</h2>
+      <p class="auth-help">Usa tu usuario y clave para acceder al inventario compartido de la compañía.</p>
+      <form id="loginForm" class="login-form">
+        <label for="loginUsername">Usuario</label>
+        <input id="loginUsername" name="username" type="text" required placeholder="admin" />
+
+        <label for="loginPassword">Clave</label>
+        <input id="loginPassword" name="password" type="password" required placeholder="********" />
+
+        <button type="submit" class="btn btn-primary">Iniciar sesión</button>
+      </form>
+      <p class="hint">Credenciales iniciales: usuario admin, clave bomberos123</p>
+      <p id="authError" class="auth-error hidden"></p>
+    </div>
+  </section>
+
+  <header class="hero hidden" id="mainHeader">
+    <div class="hero-stats" id="heroStats">
+      <article>
+        <h2 id="totalItems">0</h2>
+        <p>Artículos</p>
+      </article>
+      <article>
+        <h2 id="lowStockCount">0</h2>
+        <p>Stock Bajo</p>
+      </article>
+      <article>
+        <h2 id="inServiceCount">0</h2>
+        <p>En Servicio</p>
+      </article>
+      <article>
+        <h2 id="expiringCount">0</h2>
+        <p>Vencen en 30 días</p>
+      </article>
+    </div>
+  </header>
+
+  <section class="home-landing hidden" id="homeLanding">
+    <div class="home-shell">
+      <article class="home-card welcome-card">
+        <h2>Panel Operativo de Inventario</h2>
+        <p>
+          Supervisa el estado del equipamiento critico, detecta incidencias y ejecuta acciones rapidas para mantener la respuesta operativa de la compania.
+        </p>
+      </article>
+
+      <div class="home-grid">
+        <article class="home-card actions-card">
+          <h3>Acciones Rapidas</h3>
+          <div class="quick-actions">
+            <button id="quickScanQrBtn" class="btn btn-primary" type="button">Escanear QR</button>
+            <button id="quickNewRecordBtn" class="btn btn-secondary" type="button">Nuevo Registro</button>
+            <button id="quickReportBtn" class="btn btn-secondary" type="button">Generar Reporte</button>
+          </div>
+        </article>
+
+        <article class="home-card alerts-card">
+          <h3>Alertas Operativas</h3>
+          <ul class="home-alert-list" id="homeAlertsList">
+            <li class="home-alert-empty">Sin alertas por el momento.</li>
+          </ul>
+        </article>
+      </div>
+
+      <article class="home-card modifications-card">
+        <h3>Modificaciones Recientes</h3>
+        <ul class="activity-list" id="recentChangesList">
+          <li>
+            <span class="activity-dot" aria-hidden="true"></span>
+            <div>
+              <p>Sin modificaciones recientes por el momento.</p>
+              <small>Se mostraran automaticamente al registrar cambios.</small>
+            </div>
+          </li>
+        </ul>
+      </article>
+    </div>
+  </section>
+
+  <main class="dashboard hidden" id="mainDashboard">
+    <section class="panel form-panel" id="inventorySection">
+      <h3>Registrar / Editar Artículo</h3>
+      <form id="inventoryForm">
+        <input type="hidden" id="itemId" />
+
+        <label for="nombre">Nombre del artículo</label>
+        <input id="nombre" name="nombre" type="text" required placeholder="Ej: Manguera 2.5\"" />
+
+        <label for="categoria">Categoría</label>
+        <select id="categoria" name="categoria" required>
+          <option value="">Seleccionar...</option>
+          <option>Equipo de Protección</option>
+          <option>Herramientas</option>
+          <option>Rescate</option>
+          <option>Extinción</option>
+          <option>Médico</option>
+          <option>Comunicación</option>
+          <option>Logística</option>
+        </select>
+
+        <div class="grid-2">
+          <div>
+            <label for="cantidad">Cantidad</label>
+            <input id="cantidad" name="cantidad" type="number" min="0" required placeholder="0" />
+          </div>
+          <div>
+            <label for="minimo">Mínimo</label>
+            <input id="minimo" name="minimo" type="number" min="0" required placeholder="0" />
+          </div>
+        </div>
+
+        <label for="estado">Estado</label>
+        <select id="estado" name="estado" required>
+          <option>En Servicio</option>
+          <option>En Mantenimiento</option>
+          <option>Fuera de Servicio</option>
+        </select>
+
+        <label for="ubicacion">Ubicación</label>
+        <input id="ubicacion" name="ubicacion" type="text" required placeholder="Ej: Bodega A - Estante 3" />
+
+        <label for="fechaVencimiento">Fecha de vencimiento</label>
+        <input id="fechaVencimiento" name="fechaVencimiento" type="date" />
+
+        <label for="notas">Notas</label>
+        <textarea id="notas" name="notas" rows="3" placeholder="Detalles de uso, vencimiento, observaciones..."></textarea>
+
+        <div class="form-actions">
+          <button type="submit" class="btn btn-primary" id="saveBtn">Guardar artículo</button>
+          <button type="button" class="btn btn-secondary" id="cancelEditBtn" hidden>Cancelar edición</button>
+        </div>
+      </form>
+    </section>
+
+    <section class="panel table-panel">
+      <div class="table-header">
+        <h3>Inventario Actual</h3>
+        <div class="table-controls">
+          <input id="searchInput" type="search" placeholder="Buscar por nombre, categoría o ubicación..." />
+          <select id="filterEstado" aria-label="Filtrar por estado">
+            <option value="Todos">Todos los estados</option>
+            <option value="En Servicio">En Servicio</option>
+            <option value="En Mantenimiento">En Mantenimiento</option>
+            <option value="Fuera de Servicio">Fuera de Servicio</option>
+          </select>
+          <button id="exportCsvBtn" class="btn btn-secondary">Exportar CSV</button>
+          <button id="reportInventoryBtn" class="btn btn-secondary">PDF Inventario</button>
+          <button id="reportExpiringBtn" class="btn btn-secondary">PDF Vencimientos</button>
+        </div>
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Artículo</th>
+              <th>Categoría</th>
+              <th>Cantidad</th>
+              <th>Mínimo</th>
+              <th>Estado</th>
+              <th>Vencimiento</th>
+              <th>Alertas</th>
+              <th>Ubicación</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody id="inventoryTableBody"></tbody>
+        </table>
+      </div>
+      <p class="empty" id="emptyState">No hay artículos todavía. Agrega el primero desde el formulario.</p>
+    </section>
+
+  </main>
+
+  <section class="users-modal hidden" id="usersModal">
+    <div class="users-modal-backdrop" id="usersModalBackdrop"></div>
+    <div class="users-modal-content panel feature-layout" role="dialog" aria-modal="true" aria-labelledby="usersModalTitle">
+      <div class="table-header">
+        <h3 id="usersModalTitle">Gestión de Usuarios</h3>
+        <button id="closeUsersModalBtn" class="btn btn-secondary" type="button">Cerrar</button>
+      </div>
+
+      <form id="userForm" class="user-form">
+        <div class="grid-3">
+          <div>
+            <label for="newNombre">Nombre</label>
+            <input id="newNombre" name="nombre" type="text" required placeholder="Nombre completo" />
+          </div>
+          <div>
+            <label for="newUsername">Usuario</label>
+            <input id="newUsername" name="username" type="text" required placeholder="usuario" />
+          </div>
+          <div>
+            <label for="newPassword">Clave</label>
+            <input id="newPassword" name="password" type="password" required placeholder="mínimo 6 caracteres" />
+          </div>
+        </div>
+        <div class="grid-3">
+          <div>
+            <label for="newRole">Rol</label>
+            <select id="newRole" name="role" required>
+              <option value="admin">Administrador</option>
+              <option value="voluntario" selected>Voluntario</option>
+            </select>
+          </div>
+          <div>
+            <label for="newEmail">Correo</label>
+            <input id="newEmail" name="email" type="email" placeholder="usuario@compania.org" />
+          </div>
+          <div>
+            <label for="newPhone">Telefono</label>
+            <input id="newPhone" name="phone" type="text" placeholder="Ej: +54 9 11 1234 5678" />
+          </div>
+        </div>
+
+        <div class="permissions-grid" aria-label="Permisos por modulo">
+          <label><input type="checkbox" name="perm_canWriteInventory" checked /> Inventario</label>
+          <label><input type="checkbox" name="perm_canWriteGuardBook" checked /> Libro de Guardia</label>
+          <label><input type="checkbox" name="perm_canWriteMedicalRecords" checked /> Fichas Medicas</label>
+          <label><input type="checkbox" name="perm_canWriteVolunteerCourses" checked /> Cursos</label>
+          <label><input type="checkbox" name="perm_canWriteDayOrders" checked /> Ordenes del Dia</label>
+          <label><input type="checkbox" name="perm_canWriteVehicles" checked /> Carros</label>
+          <label><input type="checkbox" name="perm_canWriteUniforms" checked /> Uniformes</label>
+          <label><input type="checkbox" name="perm_canGenerateReports" checked /> Reportes PDF</label>
+          <label><input type="checkbox" name="perm_canManageUsers" /> Gestion de Usuarios</label>
+        </div>
+
+        <div class="grid-3">
+          <div class="user-actions-wrap">
+            <button type="submit" class="btn btn-primary">Crear usuario</button>
+          </div>
+        </div>
+      </form>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Nombre</th>
+              <th>Usuario</th>
+              <th>Correo</th>
+              <th>Telefono</th>
+              <th>Rol</th>
+              <th>Ultimo acceso</th>
+              <th>Permisos</th>
+              <th>Estado</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody id="usersTableBody"></tbody>
+        </table>
+      </div>
+
+      <section id="permissionsEditorPanel" class="permissions-editor panel hidden" aria-live="polite">
+        <div class="table-header">
+          <h4 id="permissionsEditorTitle">Permisos por módulo</h4>
+        </div>
+        <form id="permissionsEditorForm" class="user-form">
+          <div class="permissions-grid" aria-label="Editor de permisos por modulo">
+            <label><input type="checkbox" name="perm_canWriteInventory" /> Inventario</label>
+            <label><input type="checkbox" name="perm_canWriteGuardBook" /> Libro de Guardia</label>
+            <label><input type="checkbox" name="perm_canWriteMedicalRecords" /> Fichas Medicas</label>
+            <label><input type="checkbox" name="perm_canWriteVolunteerCourses" /> Cursos</label>
+            <label><input type="checkbox" name="perm_canWriteDayOrders" /> Ordenes del Dia</label>
+            <label><input type="checkbox" name="perm_canWriteVehicles" /> Carros</label>
+            <label><input type="checkbox" name="perm_canWriteUniforms" /> Uniformes</label>
+            <label><input type="checkbox" name="perm_canGenerateReports" /> Reportes PDF</label>
+            <label><input type="checkbox" name="perm_canManageUsers" /> Gestion de Usuarios</label>
+          </div>
+          <div class="form-actions">
+            <button id="savePermissionsBtn" type="submit" class="btn btn-primary">Guardar permisos</button>
+            <button id="cancelPermissionsBtn" type="button" class="btn btn-secondary">Cancelar</button>
+          </div>
+        </form>
+      </section>
+
+      <p class="empty hidden" id="usersEmpty">No hay usuarios creados.</p>
+    </div>
+  </section>
+
+  <section class="guard-modal hidden" id="guardModal">
+    <div class="guard-modal-backdrop" id="guardModalBackdrop"></div>
+    <div class="guard-modal-content panel feature-layout" role="dialog" aria-modal="true" aria-labelledby="guardModalTitle">
+      <div class="table-header">
+        <h3 id="guardModalTitle">Libro de Guardia</h3>
+        <button id="closeGuardModalBtn" class="btn btn-secondary" type="button">Cerrar</button>
+      </div>
+
+      <div class="table-controls guard-controls">
+        <input id="guardSearchInput" type="search" placeholder="Buscar en novedades, recursos o autor..." />
+        <select id="guardFilterTurno" aria-label="Filtrar por turno">
+          <option value="Todos">Todos los turnos</option>
+          <option value="Manana">Mañana</option>
+          <option value="Tarde">Tarde</option>
+          <option value="Noche">Noche</option>
+        </select>
+        <select id="guardFilterTipo" aria-label="Filtrar por tipo">
+          <option value="Todos">Todos los tipos</option>
+          <option value="Entrada">Entrada</option>
+          <option value="Salida">Salida</option>
+          <option value="Evento">Evento</option>
+          <option value="Observacion">Observación</option>
+        </select>
+      </div>
+
+      <form id="guardForm" class="guard-form">
+        <div class="grid-4">
+          <div>
+            <label for="guardFechaTurno">Fecha</label>
+            <input id="guardFechaTurno" name="fechaTurno" type="date" required />
+          </div>
+          <div>
+            <label for="guardTurno">Turno</label>
+            <select id="guardTurno" name="turno" required>
+              <option value="Manana">Mañana</option>
+              <option value="Tarde">Tarde</option>
+              <option value="Noche">Noche</option>
+            </select>
+          </div>
+          <div>
+            <label for="guardTipo">Tipo</label>
+            <select id="guardTipo" name="tipo" required>
+              <option value="Entrada">Entrada</option>
+              <option value="Salida">Salida</option>
+              <option value="Evento">Evento</option>
+              <option value="Observacion">Observación</option>
+            </select>
+          </div>
+          <div>
+            <label for="guardRecurso">Recurso / Unidad</label>
+            <input id="guardRecurso" name="recurso" type="text" placeholder="Ej: Móvil R-2" />
+          </div>
+        </div>
+        <label for="guardDescripcion">Descripción de la novedad</label>
+        <textarea id="guardDescripcion" name="descripcion" rows="3" required placeholder="Detalle de evento, observación, entrada o salida..."></textarea>
+        <div class="form-actions">
+          <button type="submit" class="btn btn-primary" id="guardSaveBtn">Registrar novedad</button>
+        </div>
+      </form>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Fecha</th>
+              <th>Turno</th>
+              <th>Tipo</th>
+              <th>Recurso</th>
+              <th>Descripción</th>
+              <th>Autor</th>
+              <th>Registro</th>
+            </tr>
+          </thead>
+          <tbody id="guardTableBody"></tbody>
+        </table>
+      </div>
+      <p class="empty" id="guardEmptyState">No hay novedades registradas para los filtros actuales.</p>
+    </div>
+  </section>
+
+  <section class="medical-modal hidden" id="medicalModal">
+    <div class="medical-modal-backdrop" id="medicalModalBackdrop"></div>
+    <div class="medical-modal-content panel feature-layout" role="dialog" aria-modal="true" aria-labelledby="medicalModalTitle">
+      <div class="table-header">
+        <h3 id="medicalModalTitle">Fichas Medicas de Voluntarios</h3>
+        <button id="closeMedicalModalBtn" class="btn btn-secondary" type="button">Cerrar</button>
+      </div>
+
+      <div class="table-controls medical-controls">
+        <input id="medicalSearchInput" type="search" placeholder="Buscar por nombre o grupo sanguineo..." />
+      </div>
+
+      <form id="medicalForm" class="medical-form">
+        <input type="hidden" id="medicalRecordId" />
+
+        <div class="grid-3">
+          <div>
+            <label for="medicalVolunteerName">Nombre del voluntario</label>
+            <input id="medicalVolunteerName" name="voluntarioNombre" type="text" required placeholder="Nombre completo" />
+          </div>
+          <div>
+            <label for="medicalBloodGroup">Grupo sanguineo</label>
+            <select id="medicalBloodGroup" name="grupoSanguineo" required>
+              <option value="O+">O+</option>
+              <option value="O-">O-</option>
+              <option value="A+">A+</option>
+              <option value="A-">A-</option>
+              <option value="B+">B+</option>
+              <option value="B-">B-</option>
+              <option value="AB+">AB+</option>
+              <option value="AB-">AB-</option>
+              <option value="Desconocido">Desconocido</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="grid-3">
+          <div>
+            <label for="medicalAllergies">Alergias</label>
+            <textarea id="medicalAllergies" name="alergias" rows="2" placeholder="Ej: Penicilina, polvo, latex..."></textarea>
+          </div>
+          <div>
+            <label for="medicalDiseases">Enfermedades</label>
+            <textarea id="medicalDiseases" name="enfermedades" rows="2" placeholder="Ej: Asma, hipertension..."></textarea>
+          </div>
+          <div>
+            <label for="medicalMedications">Medicamentos</label>
+            <textarea id="medicalMedications" name="medicamentos" rows="2" placeholder="Tratamientos actuales"></textarea>
+          </div>
+        </div>
+
+        <div class="grid-3">
+          <div>
+            <label for="medicalEmergencyName">Contacto de emergencia</label>
+            <input id="medicalEmergencyName" name="contactoEmergenciaNombre" type="text" required placeholder="Nombre y apellido" />
+          </div>
+          <div>
+            <label for="medicalEmergencyPhone">Telefono de emergencia</label>
+            <input id="medicalEmergencyPhone" name="contactoEmergenciaTelefono" type="text" required placeholder="Ej: +54 9 11 1234 5678" />
+          </div>
+          <div>
+            <label for="medicalEmergencyRelation">Relacion</label>
+            <input id="medicalEmergencyRelation" name="contactoEmergenciaRelacion" type="text" placeholder="Ej: Madre, pareja, hermano" />
+          </div>
+        </div>
+
+        <div class="form-actions">
+          <button type="submit" class="btn btn-primary" id="medicalSaveBtn">Guardar ficha</button>
+          <button type="button" class="btn btn-secondary" id="medicalCancelEditBtn" hidden>Cancelar edicion</button>
+        </div>
+      </form>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Voluntario</th>
+              <th>Grupo</th>
+              <th>Alergias</th>
+              <th>Enfermedades</th>
+              <th>Medicamentos</th>
+              <th>Contacto</th>
+              <th>Telefono</th>
+              <th>Relacion</th>
+              <th>Actualizado</th>
+              <th>Por</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody id="medicalTableBody"></tbody>
+        </table>
+      </div>
+      <p class="empty" id="medicalEmptyState">No hay fichas medicas registradas.</p>
+    </div>
+  </section>
+
+  <section class="courses-modal hidden" id="coursesModal">
+    <div class="courses-modal-backdrop" id="coursesModalBackdrop"></div>
+    <div class="courses-modal-content panel feature-layout" role="dialog" aria-modal="true" aria-labelledby="coursesModalTitle">
+      <div class="table-header">
+        <h3 id="coursesModalTitle">Cursos y Capacitaciones</h3>
+        <button id="closeCoursesModalBtn" class="btn btn-secondary" type="button">Cerrar</button>
+      </div>
+
+      <div class="table-controls courses-controls">
+        <input id="coursesSearchInput" type="search" placeholder="Buscar por voluntario, curso, institucion o certificacion..." />
+      </div>
+
+      <form id="coursesForm" class="courses-form">
+        <input type="hidden" id="courseRecordId" />
+
+        <div class="grid-3">
+          <div>
+            <label for="courseVolunteerName">Voluntario</label>
+            <input id="courseVolunteerName" name="voluntarioNombre" type="text" required placeholder="Nombre completo" />
+          </div>
+          <div>
+            <label for="courseName">Curso / Capacitacion</label>
+            <input id="courseName" name="curso" type="text" required placeholder="Ej: Rescate vehicular" />
+          </div>
+          <div>
+            <label for="courseInstitution">Institucion</label>
+            <input id="courseInstitution" name="institucion" type="text" required placeholder="Ej: Academia Nacional" />
+          </div>
+        </div>
+
+        <div class="grid-4">
+          <div>
+            <label for="courseStartDate">Fecha inicio</label>
+            <input id="courseStartDate" name="fechaInicio" type="date" required />
+          </div>
+          <div>
+            <label for="courseEndDate">Fecha fin</label>
+            <input id="courseEndDate" name="fechaFin" type="date" />
+          </div>
+          <div>
+            <label for="courseCertification">Certificacion obtenida</label>
+            <input id="courseCertification" name="certificacion" type="text" required placeholder="Ej: Certificado Nivel I" />
+          </div>
+          <div>
+            <label for="courseHours">Horas de capacitacion</label>
+            <input id="courseHours" name="horasCapacitacion" type="number" min="1" required placeholder="Ej: 40" />
+          </div>
+        </div>
+
+        <div class="form-actions">
+          <button type="submit" class="btn btn-primary" id="courseSaveBtn">Guardar curso</button>
+          <button type="button" class="btn btn-secondary" id="courseCancelEditBtn" hidden>Cancelar edicion</button>
+        </div>
+      </form>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Voluntario</th>
+              <th>Curso</th>
+              <th>Institucion</th>
+              <th>Inicio</th>
+              <th>Fin</th>
+              <th>Certificacion</th>
+              <th>Horas</th>
+              <th>Actualizado</th>
+              <th>Por</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody id="coursesTableBody"></tbody>
+        </table>
+      </div>
+      <p class="empty" id="coursesEmptyState">No hay cursos registrados.</p>
+    </div>
+  </section>
+
+  <section class="qr-modal hidden" id="qrModal">
+    <div class="qr-modal-backdrop" id="qrModalBackdrop"></div>
+    <div class="qr-modal-content panel feature-layout" role="dialog" aria-modal="true" aria-labelledby="qrModalTitle">
+      <div class="table-header">
+        <h3 id="qrModalTitle">Escaner QR</h3>
+        <button id="closeQrModalBtn" class="btn btn-secondary" type="button">Cerrar</button>
+      </div>
+
+      <p id="qrScanStatus" class="hint qr-status">Alinea el codigo QR dentro del recuadro para buscar equipo.</p>
+      <div id="qrReader" class="qr-reader" aria-label="Visor de camara para escaneo QR"></div>
+
+      <div class="grid-2 qr-manual-wrap">
+        <div>
+          <label for="qrManualInput">Codigo manual (opcional)</label>
+          <input id="qrManualInput" type="text" placeholder="Ej: ERA-A204 o MANG-38-01" />
+        </div>
+        <div class="user-actions-wrap">
+          <button id="applyQrManualBtn" class="btn btn-primary" type="button">Buscar codigo</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="dayorders-modal hidden" id="dayOrdersModal">
+    <div class="dayorders-modal-backdrop" id="dayOrdersModalBackdrop"></div>
+    <div class="dayorders-modal-content panel feature-layout" role="dialog" aria-modal="true" aria-labelledby="dayOrdersModalTitle">
+      <div class="table-header">
+        <h3 id="dayOrdersModalTitle">Ordenes del Dia</h3>
+        <button id="closeDayOrdersModalBtn" class="btn btn-secondary" type="button">Cerrar</button>
+      </div>
+
+      <div class="table-controls dayorders-controls">
+        <input id="dayOrdersSearchInput" type="search" placeholder="Buscar por titulo, contenido o firma..." />
+        <select id="dayOrdersFilterTipo" aria-label="Filtrar por tipo de orden">
+          <option value="Todos">Todos los tipos</option>
+          <option value="Disposicion">Disposicion</option>
+          <option value="Nombramiento">Nombramiento</option>
+          <option value="Felicitacion">Felicitacion</option>
+          <option value="Informacion">Informacion</option>
+        </select>
+      </div>
+
+      <form id="dayOrdersForm" class="dayorders-form">
+        <input type="hidden" id="dayOrderId" />
+
+        <div class="grid-4">
+          <div>
+            <label for="dayOrderDate">Fecha</label>
+            <input id="dayOrderDate" name="fecha" type="date" required />
+          </div>
+          <div>
+            <label for="dayOrderType">Tipo</label>
+            <select id="dayOrderType" name="tipo" required>
+              <option value="Disposicion">Disposicion</option>
+              <option value="Nombramiento">Nombramiento</option>
+              <option value="Felicitacion">Felicitacion</option>
+              <option value="Informacion">Informacion</option>
+            </select>
+          </div>
+          <div class="full-span">
+            <label for="dayOrderTitle">Titulo</label>
+            <input id="dayOrderTitle" name="titulo" type="text" required placeholder="Ej: Redistribucion de guardias semanales" />
+          </div>
+        </div>
+
+        <label for="dayOrderContent">Contenido</label>
+        <textarea id="dayOrderContent" name="contenido" rows="4" required placeholder="Redacta la orden del dia para voluntarios..."></textarea>
+
+        <div class="grid-3">
+          <div>
+            <label for="dayOrderSignedBy">Firmado por</label>
+            <input id="dayOrderSignedBy" name="firmadoPor" type="text" required placeholder="Ej: Capitan Juan Perez" />
+          </div>
+        </div>
+
+        <div class="form-actions">
+          <button id="dayOrderSaveBtn" type="submit" class="btn btn-primary">Publicar orden</button>
+          <button id="dayOrderCancelEditBtn" type="button" class="btn btn-secondary" hidden>Cancelar edicion</button>
+        </div>
+      </form>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Fecha</th>
+              <th>Tipo</th>
+              <th>Titulo</th>
+              <th>Contenido</th>
+              <th>Firmado por</th>
+              <th>Publicado</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody id="dayOrdersTableBody"></tbody>
+        </table>
+      </div>
+      <p id="dayOrdersEmptyState" class="empty">No hay ordenes del dia registradas.</p>
+    </div>
+  </section>
+
+   <section class="vehicles-modal hidden" id="vehiclesModal">
+     <div class="vehicles-modal-backdrop" id="vehiclesModalBackdrop"></div>
+     <div class="vehicles-modal-content panel feature-layout" role="dialog" aria-modal="true" aria-labelledby="vehiclesModalTitle">
+       <div class="table-header">
+         <h3 id="vehiclesModalTitle">Carros y Flota Operativa</h3>
+         <button id="closeVehiclesModalBtn" class="btn btn-secondary" type="button">Cerrar</button>
+       </div>
+
+       <div class="table-controls vehicles-controls">
+         <input id="vehiclesSearchInput" type="search" placeholder="Buscar por codigo, patente, marca o observaciones..." />
+         <select id="vehiclesFilterStatus" aria-label="Filtrar por estado operativo">
+           <option value="Todos">Todos los estados</option>
+           <option value="Disponible">Disponible</option>
+           <option value="En Servicio">En Servicio</option>
+           <option value="En Mantenimiento">En Mantenimiento</option>
+           <option value="Fuera de Servicio">Fuera de Servicio</option>
+         </select>
+       </div>
+
+       <form id="vehiclesForm" class="vehicles-form">
+         <input type="hidden" id="vehicleId" />
+
+         <div class="grid-3">
+           <div>
+             <label for="vehicleCode">Codigo interno</label>
+             <input id="vehicleCode" name="codigo" type="text" required placeholder="Ej: M-1" />
+           </div>
+           <div>
+             <label for="vehiclePlate">Patente</label>
+             <input id="vehiclePlate" name="patente" type="text" required placeholder="Ej: AB123CD" />
+           </div>
+           <div>
+             <label for="vehicleModel">Marca / Modelo</label>
+             <input id="vehicleModel" name="marcaModelo" type="text" required placeholder="Ej: Iveco Daily 70C" />
+           </div>
+         </div>
+
+         <div class="grid-4">
+           <div>
+             <label for="vehicleYear">Año</label>
+             <input id="vehicleYear" name="anio" type="number" min="1950" max="2100" required placeholder="Ej: 2018" />
+           </div>
+           <div>
+             <label for="vehicleKilometers">Kilometraje</label>
+             <input id="vehicleKilometers" name="kilometraje" type="number" min="0" required placeholder="Ej: 85400" />
+           </div>
+           <div>
+             <label for="vehicleStatus">Estado operativo</label>
+             <select id="vehicleStatus" name="estadoOperativo" required>
+               <option value="Disponible">Disponible</option>
+               <option value="En Servicio">En Servicio</option>
+               <option value="En Mantenimiento">En Mantenimiento</option>
+               <option value="Fuera de Servicio">Fuera de Servicio</option>
+             </select>
+           </div>
+           <div>
+             <label for="vehicleNextMaintenanceKm">Proxima mantencion (km)</label>
+             <input id="vehicleNextMaintenanceKm" name="proximaMantencionKm" type="number" min="0" placeholder="Ej: 90000" />
+           </div>
+         </div>
+
+         <div class="grid-2">
+           <div>
+             <label for="vehicleLastMaintenance">Ultima mantencion</label>
+             <input id="vehicleLastMaintenance" name="ultimaMantencion" type="date" />
+           </div>
+           <div>
+             <label for="vehicleTechnicalReview">Revision tecnica vence</label>
+             <input id="vehicleTechnicalReview" name="revisionTecnicaVencimiento" type="date" />
+           </div>
+         </div>
+
+         <label for="vehicleNotes">Observaciones</label>
+         <textarea id="vehicleNotes" name="observaciones" rows="3" placeholder="Novedades del carro, reparaciones, disponibilidad de equipos..."></textarea>
+
+         <div class="form-actions">
+           <button id="vehicleSaveBtn" type="submit" class="btn btn-primary">Guardar carro</button>
+           <button id="vehicleCancelEditBtn" type="button" class="btn btn-secondary" hidden>Cancelar edicion</button>
+         </div>
+       </form>
+
+       <div class="table-wrap">
+         <table>
+           <thead>
+             <tr>
+               <th>Codigo</th>
+               <th>Patente</th>
+               <th>Marca / Modelo</th>
+               <th>Año</th>
+               <th>Km</th>
+               <th>Estado</th>
+               <th>Ult. mantencion</th>
+               <th>Prox. mantencion</th>
+               <th>Rev. tecnica</th>
+               <th>Alertas</th>
+               <th>Observaciones</th>
+               <th>Actualizado</th>
+               <th>Por</th>
+               <th>Acciones</th>
+             </tr>
+           </thead>
+           <tbody id="vehiclesTableBody"></tbody>
+         </table>
+       </div>
+       <p id="vehiclesEmptyState" class="empty">No hay carros registrados.</p>
+     </div>
+   </section>
+
+   <section class="uniforms-modal hidden" id="uniformsModal">
+     <div class="uniforms-modal-backdrop" id="uniformsModalBackdrop"></div>
+     <div class="uniforms-modal-content panel feature-layout" role="dialog" aria-modal="true" aria-labelledby="uniformsModalTitle">
+       <div class="table-header">
+         <h3 id="uniformsModalTitle">Inventario de Uniformes</h3>
+         <button id="closeUniformsModalBtn" class="btn btn-secondary" type="button">Cerrar</button>
+       </div>
+
+       <div class="table-controls uniforms-controls">
+         <input id="uniformsSearchInput" type="search" placeholder="Buscar por voluntario, prenda, talla o observaciones..." />
+         <select id="uniformsFilterMovement" aria-label="Filtrar por movimiento">
+           <option value="Todos">Todos los movimientos</option>
+           <option value="Entrega">Entrega</option>
+           <option value="Devolucion">Devolucion</option>
+         </select>
+         <select id="uniformsFilterStatus" aria-label="Filtrar por estado de prenda">
+           <option value="Todos">Todos los estados</option>
+           <option value="En Uso">En Uso</option>
+           <option value="Disponible">Disponible</option>
+           <option value="En Reparacion">En Reparacion</option>
+           <option value="Fuera de Servicio">Fuera de Servicio</option>
+         </select>
+         <button id="reportUniformsBtn" class="btn btn-secondary" type="button">PDF Uniformes</button>
+       </div>
+
+       <form id="uniformsForm" class="uniforms-form">
+         <input type="hidden" id="uniformRecordId" />
+
+         <div class="grid-3">
+           <div>
+             <label for="uniformVolunteerName">Voluntario</label>
+             <input id="uniformVolunteerName" name="voluntarioNombre" type="text" required placeholder="Nombre completo" />
+           </div>
+           <div>
+             <label for="uniformGarment">Prenda / Equipamiento</label>
+             <input id="uniformGarment" name="prenda" type="text" required placeholder="Ej: Chaqueta estructural" />
+           </div>
+           <div>
+             <label for="uniformSize">Talla</label>
+             <input id="uniformSize" name="talla" type="text" required placeholder="Ej: M, L, 42" />
+           </div>
+         </div>
+
+         <div class="grid-4">
+           <div>
+             <label for="uniformQuantity">Cantidad</label>
+             <input id="uniformQuantity" name="cantidad" type="number" min="1" required placeholder="1" />
+           </div>
+           <div>
+             <label for="uniformMovementType">Movimiento</label>
+             <select id="uniformMovementType" name="tipoMovimiento" required>
+               <option value="Entrega">Entrega</option>
+               <option value="Devolucion">Devolucion</option>
+             </select>
+           </div>
+           <div>
+             <label for="uniformGarmentStatus">Estado de prenda</label>
+             <select id="uniformGarmentStatus" name="estadoPrenda" required>
+               <option value="En Uso">En Uso</option>
+               <option value="Disponible">Disponible</option>
+               <option value="En Reparacion">En Reparacion</option>
+               <option value="Fuera de Servicio">Fuera de Servicio</option>
+             </select>
+           </div>
+           <div>
+             <label for="uniformMovementDate">Fecha movimiento</label>
+             <input id="uniformMovementDate" name="fechaMovimiento" type="date" required />
+           </div>
+         </div>
+
+         <div class="grid-2">
+           <div>
+             <label for="uniformExpirationDate">Fecha vencimiento (opcional)</label>
+             <input id="uniformExpirationDate" name="fechaVencimiento" type="date" />
+           </div>
+         </div>
+
+         <label for="uniformNotes">Observaciones</label>
+         <textarea id="uniformNotes" name="observaciones" rows="3" placeholder="Entrega inicial, desgaste, devolucion parcial, etc."></textarea>
+
+         <div class="form-actions">
+           <button id="uniformSaveBtn" type="submit" class="btn btn-primary">Guardar movimiento</button>
+           <button id="uniformCancelEditBtn" type="button" class="btn btn-secondary" hidden>Cancelar edicion</button>
+         </div>
+       </form>
+
+       <div class="table-wrap">
+         <table>
+           <thead>
+             <tr>
+               <th>Voluntario</th>
+               <th>Prenda</th>
+               <th>Talla</th>
+               <th>Cantidad</th>
+               <th>Movimiento</th>
+               <th>Estado</th>
+               <th>Fecha mov.</th>
+               <th>Vencimiento</th>
+               <th>Alertas</th>
+               <th>Observaciones</th>
+               <th>Actualizado</th>
+               <th>Por</th>
+               <th>Acciones</th>
+             </tr>
+           </thead>
+           <tbody id="uniformsTableBody"></tbody>
+         </table>
+       </div>
+       <p id="uniformsEmptyState" class="empty">No hay movimientos de uniformes registrados.</p>
+     </div>
+   </section>
+
+  <template id="rowTemplate">
+    <tr>
+      <td data-field="nombre"></td>
+      <td data-field="categoria"></td>
+      <td data-field="cantidad"></td>
+      <td data-field="minimo"></td>
+      <td data-field="estado"></td>
+      <td data-field="fechaVencimiento"></td>
+      <td data-field="alertas"></td>
+      <td data-field="ubicacion"></td>
+      <td class="actions-cell">
+        <button class="icon-btn edit-btn" title="Editar">Editar</button>
+        <button class="icon-btn delete-btn" title="Eliminar">Eliminar</button>
+      </td>
+    </tr>
+  </template>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/html5-qrcode" defer></script>
+  <script src="app.js"></script>
+</body>
+</html>

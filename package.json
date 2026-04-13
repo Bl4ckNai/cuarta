@@ -1,0 +1,18 @@
+{
+  "name": "inv_cuarta",
+  "version": "1.0.0",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js",
+    "test": "echo \"Sin pruebas configuradas\""
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "express": "^5.2.1",
+    "pdfkit": "^0.18.0"
+  }
+}
