@@ -301,44 +301,6 @@ let permissions = {
   canGenerateReports: true
 };
 
-const FALLBACK_VEHICLE_PHOTO_BY_ANGLE = {
-  left: "assets/vehicle-gallery/truck-left.svg",
-  right: "assets/vehicle-gallery/truck-right.svg",
-  rear: "assets/vehicle-gallery/truck-rear.svg"
-};
-
-const vehicleViewerState = {
-  vehicleId: "",
-  angle: "left",
-  activeDrawerId: "",
-  activeDrawerItemIndex: 0,
-  editMode: false,
-  dirtyMedia: false,
-  isSavingMedia: false,
-  draggingDrawerId: "",
-  dragActive: false
-};
-
-const moduleOpenByKey = {
-  inventory: openInventoryModule,
-  guard: openGuardModal,
-  medical: openMedicalModal,
-  courses: openCoursesModal,
-  dayorders: openDayOrdersModal,
-  vehicles: openVehiclesModal,
-  uniforms: openUniformsModal
-};
-
-const moduleLabelByKey = {
-  inventory: "Inventario",
-  guard: "Libro de Guardia",
-  medical: "Fichas Medicas",
-  courses: "Cursos",
-  dayorders: "Ordenes del Dia",
-  vehicles: "Carros",
-  uniforms: "Inventario de Uniformes"
-};
-
 // Funciones de tema (oscuro/claro)
 function initTheme() {
   const savedTheme = localStorage.getItem("theme") || "dark";
@@ -776,44 +738,6 @@ function updateHomeSummary() {
   updateHomeOperationalKpis();
   updateHomeAlerts();
   updateRecentChanges();
-  renderLatestDayOrderPdf();
-}
-
-function updateHomeOperationalKpis() {
-  if (homeVehiclesUnavailableCountEl) {
-    const unavailableVehicles = vehicles.filter((vehicle) => String(vehicle.estadoOperativo || "") !== "Disponible").length;
-    homeVehiclesUnavailableCountEl.textContent = String(unavailableVehicles);
-  }
-
-  if (homeUniformCriticalCountEl) {
-    const criticalUniforms = uniforms.filter((record) => getUniformAlertData(record).className === "alert-high").length;
-    homeUniformCriticalCountEl.textContent = String(criticalUniforms);
-  }
-}
-
-function renderLatestDayOrderPdf() {
-  if (!latestDayOrderPdfMeta || !latestDayOrderPdfFrame || !latestDayOrderPdfLink) {
-    return;
-  }
-
-  if (!Array.isArray(dayOrderPdfs) || dayOrderPdfs.length === 0) {
-    latestDayOrderPdfMeta.textContent = "No hay PDF cargado todavía.";
-    latestDayOrderPdfFrame.src = "";
-    latestDayOrderPdfFrame.hidden = true;
-    latestDayOrderPdfLink.hidden = true;
-    latestDayOrderPdfLink.href = "#";
-    return;
-  }
-
-  const latest = dayOrderPdfs[0];
-  const pdfUrl = String(latest.fileUrl || "").trim();
-  const uploadedBy = String(latest.uploadedBy || "-").trim();
-  const uploadedAt = formatDateTime(latest.uploadedAt);
-  latestDayOrderPdfMeta.textContent = `${latest.titulo || latest.originalName} · Subido por ${uploadedBy} (${uploadedAt})`;
-  latestDayOrderPdfFrame.src = pdfUrl;
-  latestDayOrderPdfFrame.hidden = false;
-  latestDayOrderPdfLink.href = pdfUrl;
-  latestDayOrderPdfLink.hidden = false;
 }
 
 function updateHomeAlerts() {

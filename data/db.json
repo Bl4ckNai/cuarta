@@ -171,6 +171,18 @@
       "uploadedBy": "Administrador"
     }
   ],
+  "dayOrderPdfs": [
+    {
+      "id": "70fd7130-0b66-4e5c-904c-e6f8390a443c",
+      "companyId": "company-1",
+      "titulo": "CitaciÃ³n n006pdf",
+      "originalName": "CitaciÃ³n n006pdf.pdf",
+      "fileName": "1776220135097-34558-Citaci-n-n006pdf.pdf",
+      "fileUrl": "/uploads/day-orders/company-1/1776220135097-34558-Citaci-n-n006pdf.pdf",
+      "uploadedAt": "2026-04-15T02:28:55.124Z",
+      "uploadedBy": "Administrador"
+    }
+  ],
   "vehicles": [
     {
       "id": "02edb530-5e1e-489d-bf30-c75170ed5b8c",
