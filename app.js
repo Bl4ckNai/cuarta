@@ -101,6 +101,13 @@ const dayOrdersFilterTipo = document.getElementById("dayOrdersFilterTipo");
 const dayOrdersTableBody = document.getElementById("dayOrdersTableBody");
 const dayOrdersEmptyState = document.getElementById("dayOrdersEmptyState");
 const dayOrderCancelEditBtn = document.getElementById("dayOrderCancelEditBtn");
+const dayOrderPdfTitle = document.getElementById("dayOrderPdfTitle");
+const dayOrderPdfFile = document.getElementById("dayOrderPdfFile");
+const uploadDayOrderPdfBtn = document.getElementById("uploadDayOrderPdfBtn");
+const dayOrderPdfUploadStatus = document.getElementById("dayOrderPdfUploadStatus");
+const latestDayOrderPdfFrame = document.getElementById("latestDayOrderPdfFrame");
+const latestDayOrderPdfMeta = document.getElementById("latestDayOrderPdfMeta");
+const latestDayOrderPdfLink = document.getElementById("latestDayOrderPdfLink");
 const vehiclesForm = document.getElementById("vehiclesForm");
 const vehicleId = document.getElementById("vehicleId");
 const vehiclesTableBody = document.getElementById("vehiclesTableBody");
@@ -108,6 +115,48 @@ const vehiclesSearchInput = document.getElementById("vehiclesSearchInput");
 const vehiclesFilterStatus = document.getElementById("vehiclesFilterStatus");
 const vehiclesEmptyState = document.getElementById("vehiclesEmptyState");
 const vehicleCancelEditBtn = document.getElementById("vehicleCancelEditBtn");
+const vehiclesViewerVehicle = document.getElementById("vehiclesViewerVehicle");
+const vehicleViewerAngles = document.getElementById("vehicleViewerAngles");
+const vehiclePhotoStage = document.getElementById("vehiclePhotoStage");
+const vehiclePhotoMain = document.getElementById("vehiclePhotoMain");
+const vehicleHotspotsLayer = document.getElementById("vehicleHotspotsLayer");
+const vehiclePhotoHint = document.getElementById("vehiclePhotoHint");
+const toggleVehicleEditorBtn = document.getElementById("toggleVehicleEditorBtn");
+const saveVehicleViewerChangesBtn = document.getElementById("saveVehicleViewerChangesBtn");
+const createVehicleQuickBtn = document.getElementById("createVehicleQuickBtn");
+const deleteVehicleQuickBtn = document.getElementById("deleteVehicleQuickBtn");
+const vehicleEditorPanel = document.getElementById("vehicleEditorPanel");
+const vehiclePhotoLeftInput = document.getElementById("vehiclePhotoLeftInput");
+const vehiclePhotoRightInput = document.getElementById("vehiclePhotoRightInput");
+const vehiclePhotoRearInput = document.getElementById("vehiclePhotoRearInput");
+const vehiclePhotoLeftFile = document.getElementById("vehiclePhotoLeftFile");
+const vehiclePhotoRightFile = document.getElementById("vehiclePhotoRightFile");
+const vehiclePhotoRearFile = document.getElementById("vehiclePhotoRearFile");
+const vehicleDrawerSelect = document.getElementById("vehicleDrawerSelect");
+const vehicleDrawerNameInput = document.getElementById("vehicleDrawerNameInput");
+const vehicleDrawerItemSelect = document.getElementById("vehicleDrawerItemSelect");
+const createVehicleDrawerBtn = document.getElementById("createVehicleDrawerBtn");
+const deleteVehicleDrawerBtn = document.getElementById("deleteVehicleDrawerBtn");
+const createVehicleDrawerItemBtn = document.getElementById("createVehicleDrawerItemBtn");
+const deleteVehicleDrawerItemBtn = document.getElementById("deleteVehicleDrawerItemBtn");
+const vehicleDrawerXRange = document.getElementById("vehicleDrawerXRange");
+const vehicleDrawerYRange = document.getElementById("vehicleDrawerYRange");
+const vehicleDrawerItemNameInput = document.getElementById("vehicleDrawerItemNameInput");
+const vehicleDrawerItemStatusInput = document.getElementById("vehicleDrawerItemStatusInput");
+const vehicleDrawerItemImageInput = document.getElementById("vehicleDrawerItemImageInput");
+const vehicleDrawerItemDescriptionInput = document.getElementById("vehicleDrawerItemDescriptionInput");
+const vehicleDrawerCoordsLabel = document.getElementById("vehicleDrawerCoordsLabel");
+const vehicleMediaStatus = document.getElementById("vehicleMediaStatus");
+const vehicleEditorValidation = document.getElementById("vehicleEditorValidation");
+const vehicleDrawerPanel = document.getElementById("vehicleDrawerPanel");
+const closeVehicleDrawerPanelBtn = document.getElementById("closeVehicleDrawerPanelBtn");
+const vehicleDrawerItemsCount = document.getElementById("vehicleDrawerItemsCount");
+const vehicleDrawerPanelItemSelect = document.getElementById("vehicleDrawerPanelItemSelect");
+const vehicleDrawerTitle = document.getElementById("vehicleDrawerTitle");
+const vehicleDrawerStatus = document.getElementById("vehicleDrawerStatus");
+const vehicleDrawerItemImage = document.getElementById("vehicleDrawerItemImage");
+const vehicleDrawerItemName = document.getElementById("vehicleDrawerItemName");
+const vehicleDrawerItemDescription = document.getElementById("vehicleDrawerItemDescription");
 const uniformsForm = document.getElementById("uniformsForm");
 const uniformRecordId = document.getElementById("uniformRecordId");
 const uniformsTableBody = document.getElementById("uniformsTableBody");
@@ -150,6 +199,7 @@ let guardEntries = [];
 let medicalRecords = [];
 let volunteerCourses = [];
 let dayOrders = [];
+let dayOrderPdfs = [];
 let vehicles = [];
 let uniforms = [];
 let qrScanner = null;
@@ -166,6 +216,24 @@ let permissions = {
   canWriteUniforms: false,
   canManageUsers: false,
   canGenerateReports: true
+};
+
+const FALLBACK_VEHICLE_PHOTO_BY_ANGLE = {
+  left: "assets/vehicle-gallery/truck-left.svg",
+  right: "assets/vehicle-gallery/truck-right.svg",
+  rear: "assets/vehicle-gallery/truck-rear.svg"
+};
+
+const vehicleViewerState = {
+  vehicleId: "",
+  angle: "left",
+  activeDrawerId: "",
+  activeDrawerItemIndex: 0,
+  editMode: false,
+  dirtyMedia: false,
+  isSavingMedia: false,
+  draggingDrawerId: "",
+  dragActive: false
 };
 
 // Funciones de tema (oscuro/claro)
@@ -247,9 +315,39 @@ applyQrManualBtn.addEventListener("click", onManualQrSearch);
 dayOrdersSearchInput.addEventListener("input", renderDayOrders);
 dayOrdersFilterTipo.addEventListener("change", renderDayOrders);
 dayOrderCancelEditBtn.addEventListener("click", resetDayOrderForm);
+uploadDayOrderPdfBtn.addEventListener("click", onUploadDayOrderPdf);
 vehiclesSearchInput.addEventListener("input", renderVehicles);
 vehiclesFilterStatus.addEventListener("change", renderVehicles);
 vehicleCancelEditBtn.addEventListener("click", resetVehicleForm);
+vehiclesViewerVehicle.addEventListener("change", onVehicleViewerVehicleChange);
+closeVehicleDrawerPanelBtn.addEventListener("click", closeVehicleDrawerPanel);
+toggleVehicleEditorBtn.addEventListener("click", toggleVehicleEditorMode);
+saveVehicleViewerChangesBtn.addEventListener("click", saveVehicleViewerChanges);
+createVehicleQuickBtn.addEventListener("click", createVehicleQuick);
+deleteVehicleQuickBtn.addEventListener("click", deleteSelectedVehicleQuick);
+vehiclePhotoStage.addEventListener("click", onVehiclePhotoStageClick);
+vehicleDrawerSelect.addEventListener("change", onDrawerEditorSelectionChange);
+vehicleDrawerNameInput.addEventListener("input", onDrawerNameInputChange);
+vehicleDrawerItemSelect.addEventListener("change", onDrawerItemSelectionChange);
+createVehicleDrawerBtn.addEventListener("click", onCreateVehicleDrawerClick);
+deleteVehicleDrawerBtn.addEventListener("click", onDeleteVehicleDrawerClick);
+createVehicleDrawerItemBtn.addEventListener("click", onCreateVehicleDrawerItemClick);
+deleteVehicleDrawerItemBtn.addEventListener("click", onDeleteVehicleDrawerItemClick);
+vehicleDrawerXRange.addEventListener("input", onDrawerCoordinateRangeInput);
+vehicleDrawerYRange.addEventListener("input", onDrawerCoordinateRangeInput);
+vehicleDrawerItemNameInput.addEventListener("input", onDrawerItemInputChange);
+vehicleDrawerItemStatusInput.addEventListener("input", onDrawerItemInputChange);
+vehicleDrawerItemImageInput.addEventListener("input", onDrawerItemInputChange);
+vehicleDrawerItemDescriptionInput.addEventListener("input", onDrawerItemInputChange);
+vehiclePhotoLeftInput.addEventListener("input", () => onPhotoInputChange("left", vehiclePhotoLeftInput.value));
+vehiclePhotoRightInput.addEventListener("input", () => onPhotoInputChange("right", vehiclePhotoRightInput.value));
+vehiclePhotoRearInput.addEventListener("input", () => onPhotoInputChange("rear", vehiclePhotoRearInput.value));
+vehiclePhotoLeftFile.addEventListener("change", () => onPhotoFileChange("left", vehiclePhotoLeftFile));
+vehiclePhotoRightFile.addEventListener("change", () => onPhotoFileChange("right", vehiclePhotoRightFile));
+vehiclePhotoRearFile.addEventListener("change", () => onPhotoFileChange("rear", vehiclePhotoRearFile));
+vehicleDrawerPanelItemSelect.addEventListener("change", onDrawerPanelItemSelectionChange);
+window.addEventListener("pointermove", onVehicleHotspotPointerMove);
+window.addEventListener("pointerup", onVehicleHotspotPointerUp);
 uniformsSearchInput.addEventListener("input", renderUniforms);
 uniformsFilterMovement.addEventListener("change", renderUniforms);
 uniformsFilterStatus.addEventListener("change", renderUniforms);
@@ -320,6 +418,7 @@ async function bootstrap() {
     await refreshMedicalRecords();
     await refreshCourses();
     await refreshDayOrders();
+    await refreshDayOrderPdfs();
     await refreshVehicles();
     await refreshUniforms();
     showAppScreen();
@@ -364,6 +463,7 @@ async function onLogin(event) {
     await refreshMedicalRecords();
     await refreshCourses();
     await refreshDayOrders();
+    await refreshDayOrderPdfs();
     await refreshVehicles();
     await refreshUniforms();
     showAppScreen();
@@ -389,8 +489,16 @@ async function onLogout() {
   medicalRecords = [];
   volunteerCourses = [];
   dayOrders = [];
+  dayOrderPdfs = [];
   vehicles = [];
   uniforms = [];
+  vehicleViewerState.vehicleId = "";
+  vehicleViewerState.angle = "left";
+  vehicleViewerState.activeDrawerId = "";
+  vehicleViewerState.activeDrawerItemIndex = 0;
+  vehicleViewerState.editMode = false;
+  vehicleViewerState.dirtyMedia = false;
+  vehicleViewerState.isSavingMedia = false;
   permissions = {
     canWriteInventory: false,
     canWriteGuardBook: false,
@@ -416,6 +524,7 @@ async function onLogout() {
   closeDayOrdersModal();
   closeVehiclesModal();
   closeUniformsModal();
+  renderLatestDayOrderPdf();
   showAuthScreen();
 }
 
@@ -454,6 +563,12 @@ async function refreshDayOrders() {
   updateHomeSummary();
 }
 
+async function refreshDayOrderPdfs() {
+  const response = await api("/api/day-orders/pdfs");
+  dayOrderPdfs = response.pdfs || [];
+  renderLatestDayOrderPdf();
+}
+
 async function refreshVehicles() {
   const response = await api("/api/vehicles");
   vehicles = response.vehicles || [];
@@ -471,6 +586,32 @@ async function refreshUniforms() {
 function updateHomeSummary() {
   updateHomeAlerts();
   updateRecentChanges();
+  renderLatestDayOrderPdf();
+}
+
+function renderLatestDayOrderPdf() {
+  if (!latestDayOrderPdfMeta || !latestDayOrderPdfFrame || !latestDayOrderPdfLink) {
+    return;
+  }
+
+  if (!Array.isArray(dayOrderPdfs) || dayOrderPdfs.length === 0) {
+    latestDayOrderPdfMeta.textContent = "No hay PDF cargado todavía.";
+    latestDayOrderPdfFrame.src = "";
+    latestDayOrderPdfFrame.hidden = true;
+    latestDayOrderPdfLink.hidden = true;
+    latestDayOrderPdfLink.href = "#";
+    return;
+  }
+
+  const latest = dayOrderPdfs[0];
+  const pdfUrl = String(latest.fileUrl || "").trim();
+  const uploadedBy = String(latest.uploadedBy || "-").trim();
+  const uploadedAt = formatDateTime(latest.uploadedAt);
+  latestDayOrderPdfMeta.textContent = `${latest.titulo || latest.originalName} · Subido por ${uploadedBy} (${uploadedAt})`;
+  latestDayOrderPdfFrame.src = pdfUrl;
+  latestDayOrderPdfFrame.hidden = false;
+  latestDayOrderPdfLink.href = pdfUrl;
+  latestDayOrderPdfLink.hidden = false;
 }
 
 function updateHomeAlerts() {
@@ -1075,6 +1216,7 @@ async function openCoursesModal() {
 async function openDayOrdersModal() {
   try {
     await refreshDayOrders();
+    await refreshDayOrderPdfs();
     openFeatureModal(dayOrdersModal);
     setActiveNav(menuOpenDayOrders);
   } catch (error) {
@@ -1181,6 +1323,9 @@ function closeDayOrdersModal(options = {}) {
 }
 
 function closeVehiclesModal(options = {}) {
+  closeVehicleDrawerPanel();
+  vehicleViewerState.editMode = false;
+  vehicleEditorPanel.classList.add("hidden");
   closeFeatureModal(vehiclesModal, options);
 }
 
@@ -1553,6 +1698,18 @@ function applyPermissionState() {
 
   if (dayOrdersDisabled) {
     dayOrderCancelEditBtn.hidden = true;
+  }
+
+  if (dayOrderPdfTitle) {
+    dayOrderPdfTitle.disabled = dayOrdersDisabled;
+  }
+
+  if (dayOrderPdfFile) {
+    dayOrderPdfFile.disabled = dayOrdersDisabled;
+  }
+
+  if (uploadDayOrderPdfBtn) {
+    uploadDayOrderPdfBtn.disabled = dayOrdersDisabled;
   }
 
   const vehiclesDisabled = !permissions.canWriteVehicles;
@@ -2098,6 +2255,81 @@ async function onDayOrderSubmit(event) {
   }
 }
 
+async function onUploadDayOrderPdf() {
+  if (!permissions.canWriteDayOrders) {
+    alert("Tu rol es solo lectura. No puedes subir PDFs de ordenes del dia.");
+    return;
+  }
+
+  const selectedFile = dayOrderPdfFile?.files?.[0];
+  if (!selectedFile) {
+    if (dayOrderPdfUploadStatus) {
+      dayOrderPdfUploadStatus.textContent = "Selecciona un archivo PDF antes de subir.";
+    }
+    return;
+  }
+
+  const fileType = String(selectedFile.type || "").toLowerCase();
+  const fileName = String(selectedFile.name || "").toLowerCase();
+  const looksLikePdf = fileType === "application/pdf" || fileName.endsWith(".pdf");
+
+  if (!looksLikePdf) {
+    if (dayOrderPdfUploadStatus) {
+      dayOrderPdfUploadStatus.textContent = "El archivo debe ser un PDF válido.";
+    }
+    return;
+  }
+
+  if (selectedFile.size > 10 * 1024 * 1024) {
+    if (dayOrderPdfUploadStatus) {
+      dayOrderPdfUploadStatus.textContent = "El PDF supera el límite de 10 MB.";
+    }
+    return;
+  }
+
+  const title = String(dayOrderPdfTitle?.value || "").trim();
+  const formData = new FormData();
+  formData.append("pdf", selectedFile);
+  if (title) {
+    formData.append("titulo", title);
+  }
+
+  if (dayOrderPdfUploadStatus) {
+    dayOrderPdfUploadStatus.textContent = "Subiendo PDF...";
+  }
+  uploadDayOrderPdfBtn.disabled = true;
+
+  try {
+    const response = await fetch("/api/day-orders/pdfs/upload", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${authToken}`
+      },
+      body: formData
+    });
+
+    const payload = await safeJson(response);
+    if (!response.ok) {
+      throw new Error(payload?.error || "No se pudo subir el PDF.");
+    }
+
+    dayOrderPdfTitle.value = "";
+    dayOrderPdfFile.value = "";
+    await refreshDayOrderPdfs();
+
+    if (dayOrderPdfUploadStatus) {
+      const uploadedName = payload?.pdf?.titulo || payload?.pdf?.originalName || "PDF";
+      dayOrderPdfUploadStatus.textContent = `PDF subido correctamente: ${uploadedName}`;
+    }
+  } catch (error) {
+    if (dayOrderPdfUploadStatus) {
+      dayOrderPdfUploadStatus.textContent = error.message || "No se pudo subir el PDF.";
+    }
+  } finally {
+    uploadDayOrderPdfBtn.disabled = !permissions.canWriteDayOrders;
+  }
+}
+
 function resetDayOrderForm() {
   dayOrdersForm.reset();
   dayOrderId.value = "";
@@ -2113,10 +2345,24 @@ function getFilteredVehicles() {
 
   return vehicles.filter((vehicle) => {
     const matchesStatus = status === "Todos" || vehicle.estadoOperativo === status;
-    const haystack = `${vehicle.codigo || ""} ${vehicle.patente || ""} ${vehicle.marcaModelo || ""} ${vehicle.observaciones || ""}`.toLowerCase();
+    const haystack = `${vehicle.nombre || ""} ${vehicle.codigo || ""} ${vehicle.patente || ""} ${vehicle.marcaModelo || ""} ${vehicle.observaciones || ""}`.toLowerCase();
     const matchesTerm = !term || haystack.includes(term);
     return matchesStatus && matchesTerm;
   });
+}
+
+function getVehicleDisplayName(vehicle) {
+  const nombre = String(vehicle?.nombre || "").trim();
+  if (nombre) {
+    return nombre;
+  }
+
+  const marcaModelo = String(vehicle?.marcaModelo || "").trim();
+  if (marcaModelo) {
+    return marcaModelo;
+  }
+
+  return String(vehicle?.codigo || "Carro").trim() || "Carro";
 }
 
 function renderVehicles() {
@@ -2133,6 +2379,7 @@ function renderVehicles() {
 
     const statusClass = getVehicleStatusClass(vehicle.estadoOperativo);
     tr.innerHTML = `
+      <td>${escapeHtml(getVehicleDisplayName(vehicle))}</td>
       <td>${escapeHtml(vehicle.codigo)}</td>
       <td>${escapeHtml(vehicle.patente)}</td>
       <td>${escapeHtml(vehicle.marcaModelo)}</td>
@@ -2169,6 +2416,1054 @@ function renderVehicles() {
   });
 
   vehiclesEmptyState.classList.toggle("hidden", rows.length > 0);
+  renderVehiclePhotoViewer(rows);
+}
+
+function onVehicleViewerVehicleChange() {
+  vehicleViewerState.vehicleId = vehiclesViewerVehicle.value;
+  vehicleViewerState.angle = "left";
+  vehicleViewerState.activeDrawerId = "";
+  vehicleViewerState.activeDrawerItemIndex = 0;
+  vehicleViewerState.dirtyMedia = false;
+  renderVehiclePhotoViewer(getFilteredVehicles());
+}
+
+function getVehiclePhotoGallery(vehicle) {
+  const source = Array.isArray(vehicle?.photoGallery) ? vehicle.photoGallery : [];
+  const normalized = source
+    .map((entry) => ({
+      angle: String(entry?.angle || "").trim().toLowerCase(),
+      label: String(entry?.label || "").trim(),
+      image: String(entry?.image || "").trim()
+    }))
+    .filter((entry) => ["left", "right", "rear"].includes(entry.angle) && entry.image);
+
+  if (normalized.length > 0) {
+    return normalized;
+  }
+
+  return [
+    { angle: "left", label: "Lado izquierdo", image: FALLBACK_VEHICLE_PHOTO_BY_ANGLE.left },
+    { angle: "right", label: "Lado derecho", image: FALLBACK_VEHICLE_PHOTO_BY_ANGLE.right },
+    { angle: "rear", label: "Parte trasera", image: FALLBACK_VEHICLE_PHOTO_BY_ANGLE.rear }
+  ];
+}
+
+function getVehicleDrawers(vehicle) {
+  if (!Array.isArray(vehicle?.drawerInventory)) {
+    return [];
+  }
+
+  return vehicle.drawerInventory
+    .map((drawer) => ({
+      id: String(drawer?.id || "").trim(),
+      nombre: String(drawer?.nombre || "").trim(),
+      angle: String(drawer?.angle || "").trim().toLowerCase(),
+      x: clamp(Number(drawer?.x), 4, 96),
+      y: clamp(Number(drawer?.y), 10, 90),
+      items: normalizeDrawerItems(drawer)
+    }))
+    .map((drawer) => ({
+      ...drawer,
+      item: drawer.items[0]
+    }))
+    .filter((drawer) => drawer.id && ["left", "right", "rear"].includes(drawer.angle));
+}
+
+function normalizeDrawerItems(drawer) {
+  const source = Array.isArray(drawer?.items)
+    ? drawer.items
+    : drawer?.item
+      ? [drawer.item]
+      : [];
+
+  const normalized = source
+    .map((item) => ({
+      nombre: String(item?.nombre || "").trim() || "Sin item asignado",
+      estado: String(item?.estado || "").trim() || "Sin estado",
+      imagen: String(item?.imagen || "").trim() || "logo.png",
+      descripcion: String(item?.descripcion || "").trim() || "No hay descripción disponible."
+    }))
+    .filter((item) => item.nombre);
+
+  if (normalized.length > 0) {
+    return normalized;
+  }
+
+  return [
+    {
+      nombre: "Sin item asignado",
+      estado: "Sin estado",
+      imagen: "logo.png",
+      descripcion: "No hay descripción disponible."
+    }
+  ];
+}
+
+function renderVehiclePhotoViewer(filteredVehicles = []) {
+  if (!vehiclesViewerVehicle || !vehicleViewerAngles || !vehiclePhotoMain || !vehicleHotspotsLayer || !vehiclePhotoHint) {
+    return;
+  }
+
+  const rows = Array.isArray(filteredVehicles) ? filteredVehicles : [];
+  vehiclesViewerVehicle.innerHTML = "";
+
+  if (rows.length === 0) {
+    vehiclePhotoMain.src = FALLBACK_VEHICLE_PHOTO_BY_ANGLE.left;
+    vehiclePhotoMain.alt = "No hay carros disponibles para mostrar";
+    vehicleViewerAngles.innerHTML = "";
+    vehicleHotspotsLayer.innerHTML = "";
+    vehiclePhotoHint.textContent = "No hay carros que coincidan con el filtro actual.";
+    closeVehicleDrawerPanel();
+    updateVehicleMediaControls(null, []);
+    return;
+  }
+
+  rows.forEach((vehicle) => {
+    const option = document.createElement("option");
+    option.value = vehicle.id;
+    option.textContent = `${getVehicleDisplayName(vehicle)} · ${vehicle.codigo} (${vehicle.patente})`;
+    vehiclesViewerVehicle.appendChild(option);
+  });
+
+  const hasCurrentSelection = rows.some((vehicle) => vehicle.id === vehicleViewerState.vehicleId);
+  if (!hasCurrentSelection) {
+    vehicleViewerState.vehicleId = rows[0].id;
+    vehicleViewerState.activeDrawerId = "";
+  }
+
+  vehiclesViewerVehicle.value = vehicleViewerState.vehicleId;
+
+  const selectedVehicle = rows.find((vehicle) => vehicle.id === vehicleViewerState.vehicleId) || rows[0];
+  const gallery = getVehiclePhotoGallery(selectedVehicle);
+  const allDrawers = getVehicleDrawers(selectedVehicle);
+  const hasCurrentAngle = gallery.some((photo) => photo.angle === vehicleViewerState.angle);
+  if (!hasCurrentAngle) {
+    vehicleViewerState.angle = gallery[0].angle;
+    vehicleViewerState.activeDrawerId = "";
+  }
+
+  vehicleViewerAngles.innerHTML = "";
+  gallery.forEach((photo) => {
+    const angleBtn = document.createElement("button");
+    angleBtn.type = "button";
+    angleBtn.className = "vehicle-angle-btn";
+    if (photo.angle === vehicleViewerState.angle) {
+      angleBtn.classList.add("is-active");
+      angleBtn.setAttribute("aria-selected", "true");
+    } else {
+      angleBtn.setAttribute("aria-selected", "false");
+    }
+    angleBtn.setAttribute("role", "tab");
+    angleBtn.textContent = photo.label || photo.angle;
+    angleBtn.addEventListener("click", () => {
+      vehicleViewerState.angle = photo.angle;
+      vehicleViewerState.activeDrawerId = "";
+      vehicleViewerState.activeDrawerItemIndex = 0;
+      renderVehiclePhotoViewer(rows);
+    });
+    vehicleViewerAngles.appendChild(angleBtn);
+  });
+
+  const currentPhoto = gallery.find((photo) => photo.angle === vehicleViewerState.angle) || gallery[0];
+  vehiclePhotoMain.src = currentPhoto.image;
+  vehiclePhotoMain.alt = `Vista ${currentPhoto.label || currentPhoto.angle} del carro ${selectedVehicle.codigo}`;
+
+  const drawersInAngle = getVehicleDrawers(selectedVehicle).filter((drawer) => drawer.angle === vehicleViewerState.angle);
+  vehicleHotspotsLayer.innerHTML = "";
+
+  drawersInAngle.forEach((drawer) => {
+    const hotspot = document.createElement("button");
+    hotspot.type = "button";
+    hotspot.className = "vehicle-hotspot";
+    hotspot.dataset.drawerId = drawer.id;
+    hotspot.style.left = `${drawer.x}%`;
+    hotspot.style.top = `${drawer.y}%`;
+    hotspot.textContent = drawer.id;
+    hotspot.setAttribute("aria-label", `Abrir inventario de ${drawer.nombre || drawer.id}`);
+
+    if (vehicleViewerState.activeDrawerId === drawer.id) {
+      hotspot.classList.add("is-active");
+    }
+
+    hotspot.addEventListener("click", () => {
+      vehicleViewerState.activeDrawerId = drawer.id;
+      vehicleViewerState.activeDrawerItemIndex = 0;
+      openVehicleDrawerPanel(drawer);
+      renderVehiclePhotoViewer(rows);
+    });
+
+    hotspot.addEventListener("pointerdown", (event) => {
+      onVehicleHotspotPointerDown(event, drawer.id);
+    });
+
+    vehicleHotspotsLayer.appendChild(hotspot);
+  });
+
+  if (drawersInAngle.length === 0) {
+    vehiclePhotoHint.textContent = "Este ángulo no tiene gavetas configuradas.";
+    closeVehicleDrawerPanel();
+    updateVehicleMediaControls(selectedVehicle, allDrawers);
+    return;
+  }
+
+  const activeDrawer = drawersInAngle.find((drawer) => drawer.id === vehicleViewerState.activeDrawerId);
+  if (activeDrawer) {
+    vehiclePhotoHint.textContent = "Gaveta activa resaltada en la foto.";
+    openVehicleDrawerPanel(activeDrawer);
+    updateVehicleMediaControls(selectedVehicle, allDrawers);
+    return;
+  }
+
+  vehiclePhotoHint.textContent = "Selecciona una gaveta para ver el inventario principal.";
+  closeVehicleDrawerPanel();
+  updateVehicleMediaControls(selectedVehicle, allDrawers);
+}
+
+function updateVehicleMediaControls(vehicle, drawers) {
+  const editable = Boolean(vehicle) && permissions.canWriteVehicles;
+
+  toggleVehicleEditorBtn.disabled = !editable;
+  saveVehicleViewerChangesBtn.disabled = !editable || !vehicleViewerState.dirtyMedia || vehicleViewerState.isSavingMedia;
+  createVehicleQuickBtn.disabled = !permissions.canWriteVehicles || vehicleViewerState.isSavingMedia;
+  deleteVehicleQuickBtn.disabled = !editable || vehicleViewerState.isSavingMedia;
+
+  if (!vehicle) {
+    vehiclePhotoLeftInput.value = "";
+    vehiclePhotoRightInput.value = "";
+    vehiclePhotoRearInput.value = "";
+    vehicleDrawerSelect.innerHTML = "";
+    vehicleDrawerNameInput.value = "";
+    vehicleDrawerItemSelect.innerHTML = "";
+    vehicleDrawerNameInput.disabled = true;
+    createVehicleDrawerBtn.disabled = true;
+    deleteVehicleDrawerBtn.disabled = true;
+    createVehicleDrawerItemBtn.disabled = true;
+    deleteVehicleDrawerItemBtn.disabled = true;
+    vehicleDrawerXRange.value = "0";
+    vehicleDrawerYRange.value = "0";
+    vehicleDrawerItemNameInput.value = "";
+    vehicleDrawerItemStatusInput.value = "";
+    vehicleDrawerItemImageInput.value = "";
+    vehicleDrawerItemDescriptionInput.value = "";
+    vehicleDrawerItemNameInput.disabled = true;
+    vehicleDrawerItemStatusInput.disabled = true;
+    vehicleDrawerItemImageInput.disabled = true;
+    vehicleDrawerItemDescriptionInput.disabled = true;
+    vehicleEditorValidation.textContent = "";
+    vehicleEditorValidation.classList.add("hidden");
+    vehicleDrawerCoordsLabel.textContent = "Selecciona una gaveta para ajustar coordenadas.";
+    toggleVehicleEditorBtn.textContent = "Editar hotspots y fotos";
+    vehicleMediaStatus.textContent = "Sin cambios pendientes.";
+    return;
+  }
+
+  const galleryByAngle = {
+    left: FALLBACK_VEHICLE_PHOTO_BY_ANGLE.left,
+    right: FALLBACK_VEHICLE_PHOTO_BY_ANGLE.right,
+    rear: FALLBACK_VEHICLE_PHOTO_BY_ANGLE.rear
+  };
+
+  getVehiclePhotoGallery(vehicle).forEach((entry) => {
+    galleryByAngle[entry.angle] = entry.image;
+  });
+
+  vehiclePhotoLeftInput.value = galleryByAngle.left;
+  vehiclePhotoRightInput.value = galleryByAngle.right;
+  vehiclePhotoRearInput.value = galleryByAngle.rear;
+
+  vehicleDrawerSelect.innerHTML = "";
+  drawers.forEach((drawer) => {
+    const option = document.createElement("option");
+    option.value = drawer.id;
+    option.textContent = `${drawer.id} - ${drawer.nombre}`;
+    vehicleDrawerSelect.appendChild(option);
+  });
+
+  if (drawers.length === 0) {
+    vehicleDrawerNameInput.value = "";
+    vehicleDrawerItemSelect.innerHTML = "";
+    vehicleDrawerNameInput.disabled = true;
+    createVehicleDrawerBtn.disabled = !editable;
+    deleteVehicleDrawerBtn.disabled = true;
+    createVehicleDrawerItemBtn.disabled = true;
+    deleteVehicleDrawerItemBtn.disabled = true;
+    vehicleDrawerXRange.value = "0";
+    vehicleDrawerYRange.value = "0";
+    vehicleDrawerItemNameInput.value = "";
+    vehicleDrawerItemStatusInput.value = "";
+    vehicleDrawerItemImageInput.value = "";
+    vehicleDrawerItemDescriptionInput.value = "";
+    vehicleDrawerItemNameInput.disabled = true;
+    vehicleDrawerItemStatusInput.disabled = true;
+    vehicleDrawerItemImageInput.disabled = true;
+    vehicleDrawerItemDescriptionInput.disabled = true;
+    vehicleDrawerCoordsLabel.textContent = "El carro no tiene gavetas para editar.";
+  } else {
+    const selectedDrawer = drawers.find((drawer) => drawer.id === vehicleViewerState.activeDrawerId) || drawers[0];
+    vehicleDrawerSelect.value = selectedDrawer.id;
+    vehicleViewerState.activeDrawerId = selectedDrawer.id;
+    vehicleDrawerNameInput.value = selectedDrawer.nombre || "";
+    vehicleDrawerNameInput.disabled = !editable;
+    createVehicleDrawerBtn.disabled = !editable;
+    deleteVehicleDrawerBtn.disabled = !editable;
+    createVehicleDrawerItemBtn.disabled = !editable;
+    vehicleDrawerXRange.value = String(Math.round(selectedDrawer.x));
+    vehicleDrawerYRange.value = String(Math.round(selectedDrawer.y));
+
+    const drawerItems = Array.isArray(selectedDrawer.items) ? selectedDrawer.items : [];
+    if (vehicleViewerState.activeDrawerItemIndex >= drawerItems.length) {
+      vehicleViewerState.activeDrawerItemIndex = 0;
+    }
+
+    vehicleDrawerItemSelect.innerHTML = "";
+    drawerItems.forEach((item, index) => {
+      const option = document.createElement("option");
+      option.value = String(index);
+      option.textContent = `${index + 1}. ${item.nombre}`;
+      vehicleDrawerItemSelect.appendChild(option);
+    });
+
+    const activeItem = drawerItems[vehicleViewerState.activeDrawerItemIndex] || drawerItems[0];
+    vehicleDrawerItemSelect.value = String(vehicleViewerState.activeDrawerItemIndex);
+    deleteVehicleDrawerItemBtn.disabled = !editable || drawerItems.length <= 1;
+    vehicleDrawerItemNameInput.value = activeItem?.nombre || "";
+    vehicleDrawerItemStatusInput.value = activeItem?.estado || "";
+    vehicleDrawerItemImageInput.value = activeItem?.imagen || "";
+    vehicleDrawerItemDescriptionInput.value = activeItem?.descripcion || "";
+    vehicleDrawerItemNameInput.disabled = !editable;
+    vehicleDrawerItemStatusInput.disabled = !editable;
+    vehicleDrawerItemImageInput.disabled = !editable;
+    vehicleDrawerItemDescriptionInput.disabled = !editable;
+    vehicleDrawerCoordsLabel.textContent = `Coordenadas de ${selectedDrawer.id}: X ${Math.round(selectedDrawer.x)}% / Y ${Math.round(selectedDrawer.y)}%`;
+  }
+
+  toggleVehicleEditorBtn.textContent = vehicleViewerState.editMode ? "Ocultar editor" : "Editar hotspots y fotos";
+  if (!editable) {
+    vehicleMediaStatus.textContent = "Solo lectura: sin permisos para editar carros.";
+  } else if (vehicleViewerState.isSavingMedia) {
+    vehicleMediaStatus.textContent = "Guardando cambios del visor...";
+  } else if (vehicleViewerState.dirtyMedia) {
+    vehicleMediaStatus.textContent = "Hay cambios sin guardar.";
+  } else {
+    vehicleMediaStatus.textContent = "Sin cambios pendientes.";
+  }
+
+  vehicleEditorValidation.textContent = "";
+  vehicleEditorValidation.classList.add("hidden");
+}
+
+function generateNextVehicleCode() {
+  const existing = new Set(
+    vehicles
+      .map((vehicle) => String(vehicle?.codigo || "").trim().toUpperCase())
+      .filter(Boolean)
+  );
+
+  for (let i = 1; i <= 999; i += 1) {
+    const code = `M-${i}`;
+    if (!existing.has(code)) {
+      return code;
+    }
+  }
+
+  return `M-${Date.now()}`;
+}
+
+function generateNextVehiclePlate() {
+  const suffix = String(Math.floor(Math.random() * 900) + 100);
+  return `ZZ${suffix}AA`;
+}
+
+async function createVehicleQuick() {
+  if (!permissions.canWriteVehicles) {
+    alert("Tu rol es solo lectura. No puedes agregar carros.");
+    return;
+  }
+
+  const generatedCode = generateNextVehicleCode();
+
+  const payload = {
+    nombre: `Carro ${generatedCode}`,
+    codigo: generatedCode,
+    patente: generateNextVehiclePlate(),
+    marcaModelo: "Nuevo carro",
+    anio: new Date().getFullYear(),
+    kilometraje: 0,
+    estadoOperativo: "Disponible",
+    ultimaMantencion: "",
+    proximaMantencionKm: 0,
+    revisionTecnicaVencimiento: "",
+    observaciones: "Registro creado desde visor de gavetas"
+  };
+
+  try {
+    const response = await api("/api/vehicles", {
+      method: "POST",
+      body: payload
+    });
+
+    await refreshVehicles();
+    if (response?.vehicle?.id) {
+      vehicleViewerState.vehicleId = response.vehicle.id;
+      vehicleViewerState.angle = "left";
+      vehicleViewerState.activeDrawerId = "";
+      vehicleViewerState.dirtyMedia = false;
+      renderVehiclePhotoViewer(getFilteredVehicles());
+    }
+  } catch (error) {
+    alert(error.message || "No se pudo crear el carro.");
+  }
+}
+
+async function deleteSelectedVehicleQuick() {
+  if (!permissions.canWriteVehicles) {
+    alert("Tu rol es solo lectura. No puedes eliminar carros.");
+    return;
+  }
+
+  const selectedVehicle = vehicles.find((vehicle) => vehicle.id === vehicleViewerState.vehicleId);
+  if (!selectedVehicle) {
+    alert("Selecciona un carro para eliminar.");
+    return;
+  }
+
+  const confirmDelete = confirm(`¿Eliminar el carro ${selectedVehicle.codigo} (${selectedVehicle.patente})?`);
+  if (!confirmDelete) {
+    return;
+  }
+
+  try {
+    await api(`/api/vehicles/${selectedVehicle.id}`, { method: "DELETE" });
+    vehicleViewerState.vehicleId = "";
+    vehicleViewerState.activeDrawerId = "";
+    vehicleViewerState.activeDrawerItemIndex = 0;
+    vehicleViewerState.dirtyMedia = false;
+    await refreshVehicles();
+  } catch (error) {
+    alert(error.message || "No se pudo eliminar el carro seleccionado.");
+  }
+}
+
+function toggleVehicleEditorMode() {
+  if (!permissions.canWriteVehicles) {
+    alert("Tu rol es solo lectura. No puedes editar fotos ni hotspots.");
+    return;
+  }
+
+  vehicleViewerState.editMode = !vehicleViewerState.editMode;
+  vehicleEditorPanel.classList.toggle("hidden", !vehicleViewerState.editMode);
+  renderVehiclePhotoViewer(getFilteredVehicles());
+}
+
+function onDrawerEditorSelectionChange() {
+  vehicleViewerState.activeDrawerId = vehicleDrawerSelect.value;
+  vehicleViewerState.activeDrawerItemIndex = 0;
+  renderVehiclePhotoViewer(getFilteredVehicles());
+}
+
+function onDrawerItemSelectionChange() {
+  vehicleViewerState.activeDrawerItemIndex = Number(vehicleDrawerItemSelect.value || 0);
+  renderVehiclePhotoViewer(getFilteredVehicles());
+}
+
+function onDrawerPanelItemSelectionChange() {
+  vehicleViewerState.activeDrawerItemIndex = Number(vehicleDrawerPanelItemSelect.value || 0);
+  renderVehiclePhotoViewer(getFilteredVehicles());
+}
+
+function onDrawerNameInputChange() {
+  if (!permissions.canWriteVehicles) {
+    return;
+  }
+
+  const selectedVehicle = vehicles.find((vehicle) => vehicle.id === vehicleViewerState.vehicleId);
+  if (!selectedVehicle || !Array.isArray(selectedVehicle.drawerInventory) || !vehicleViewerState.activeDrawerId) {
+    return;
+  }
+
+  const drawer = selectedVehicle.drawerInventory.find((candidate) => candidate.id === vehicleViewerState.activeDrawerId);
+  if (!drawer) {
+    return;
+  }
+
+  const nombre = String(vehicleDrawerNameInput.value || "").trim();
+  drawer.nombre = nombre || drawer.id;
+  vehicleViewerState.dirtyMedia = true;
+  renderVehiclePhotoViewer(getFilteredVehicles());
+}
+
+function onCreateVehicleDrawerClick() {
+  if (!permissions.canWriteVehicles) {
+    alert("Tu rol es solo lectura. No puedes crear gavetas.");
+    return;
+  }
+
+  const selectedVehicle = vehicles.find((vehicle) => vehicle.id === vehicleViewerState.vehicleId);
+  if (!selectedVehicle) {
+    alert("Selecciona un carro para crear una gaveta.");
+    return;
+  }
+
+  if (!Array.isArray(selectedVehicle.drawerInventory)) {
+    selectedVehicle.drawerInventory = [];
+  }
+
+  const newDrawer = {
+    id: generateNextDrawerId(selectedVehicle),
+    nombre: `Nueva gaveta ${selectedVehicle.drawerInventory.length + 1}`,
+    angle: vehicleViewerState.angle || "left",
+    x: 50,
+    y: 50,
+    items: [
+      {
+        nombre: "Nuevo objeto",
+        estado: "Pendiente",
+        imagen: "logo.png",
+        descripcion: "Completa la información del item principal de esta gaveta."
+      }
+    ]
+  };
+
+  selectedVehicle.drawerInventory.push(newDrawer);
+  vehicleViewerState.activeDrawerId = newDrawer.id;
+  vehicleViewerState.activeDrawerItemIndex = 0;
+  vehicleViewerState.dirtyMedia = true;
+  renderVehiclePhotoViewer(getFilteredVehicles());
+}
+
+function onDeleteVehicleDrawerClick() {
+  if (!permissions.canWriteVehicles) {
+    alert("Tu rol es solo lectura. No puedes eliminar gavetas.");
+    return;
+  }
+
+  const selectedVehicle = vehicles.find((vehicle) => vehicle.id === vehicleViewerState.vehicleId);
+  if (!selectedVehicle || !Array.isArray(selectedVehicle.drawerInventory) || !vehicleViewerState.activeDrawerId) {
+    alert("Selecciona una gaveta para eliminar.");
+    return;
+  }
+
+  const drawer = selectedVehicle.drawerInventory.find((candidate) => candidate.id === vehicleViewerState.activeDrawerId);
+  if (!drawer) {
+    return;
+  }
+
+  const confirmDelete = confirm(`¿Eliminar la gaveta ${drawer.id} (${drawer.nombre})?`);
+  if (!confirmDelete) {
+    return;
+  }
+
+  selectedVehicle.drawerInventory = selectedVehicle.drawerInventory.filter((candidate) => candidate.id !== drawer.id);
+  vehicleViewerState.activeDrawerId = "";
+  vehicleViewerState.activeDrawerItemIndex = 0;
+  vehicleViewerState.dirtyMedia = true;
+  renderVehiclePhotoViewer(getFilteredVehicles());
+}
+
+function onCreateVehicleDrawerItemClick() {
+  if (!permissions.canWriteVehicles) {
+    alert("Tu rol es solo lectura. No puedes agregar ítems.");
+    return;
+  }
+
+  const selectedVehicle = vehicles.find((vehicle) => vehicle.id === vehicleViewerState.vehicleId);
+  if (!selectedVehicle || !Array.isArray(selectedVehicle.drawerInventory) || !vehicleViewerState.activeDrawerId) {
+    alert("Selecciona una gaveta para agregar un ítem.");
+    return;
+  }
+
+  const drawer = selectedVehicle.drawerInventory.find((candidate) => candidate.id === vehicleViewerState.activeDrawerId);
+  if (!drawer) {
+    return;
+  }
+
+  if (!Array.isArray(drawer.items)) {
+    drawer.items = normalizeDrawerItems(drawer);
+  }
+
+  drawer.items.push({
+    nombre: `Nuevo objeto ${drawer.items.length + 1}`,
+    estado: "Pendiente",
+    imagen: "logo.png",
+    descripcion: "Completa la información de este ítem."
+  });
+
+  vehicleViewerState.activeDrawerItemIndex = drawer.items.length - 1;
+  vehicleViewerState.dirtyMedia = true;
+  renderVehiclePhotoViewer(getFilteredVehicles());
+}
+
+function onDeleteVehicleDrawerItemClick() {
+  if (!permissions.canWriteVehicles) {
+    alert("Tu rol es solo lectura. No puedes eliminar ítems.");
+    return;
+  }
+
+  const selectedVehicle = vehicles.find((vehicle) => vehicle.id === vehicleViewerState.vehicleId);
+  if (!selectedVehicle || !Array.isArray(selectedVehicle.drawerInventory) || !vehicleViewerState.activeDrawerId) {
+    alert("Selecciona una gaveta para eliminar un ítem.");
+    return;
+  }
+
+  const drawer = selectedVehicle.drawerInventory.find((candidate) => candidate.id === vehicleViewerState.activeDrawerId);
+  if (!drawer) {
+    return;
+  }
+
+  if (!Array.isArray(drawer.items)) {
+    drawer.items = normalizeDrawerItems(drawer);
+  }
+
+  if (drawer.items.length <= 1) {
+    alert("Cada gaveta debe tener al menos un ítem.");
+    return;
+  }
+
+  const currentItem = drawer.items[vehicleViewerState.activeDrawerItemIndex] || drawer.items[0];
+  const confirmDelete = confirm(`¿Eliminar el ítem ${currentItem?.nombre || "seleccionado"}?`);
+  if (!confirmDelete) {
+    return;
+  }
+
+  drawer.items.splice(vehicleViewerState.activeDrawerItemIndex, 1);
+  if (vehicleViewerState.activeDrawerItemIndex >= drawer.items.length) {
+    vehicleViewerState.activeDrawerItemIndex = drawer.items.length - 1;
+  }
+
+  vehicleViewerState.dirtyMedia = true;
+  renderVehiclePhotoViewer(getFilteredVehicles());
+}
+
+function onDrawerItemInputChange() {
+  if (!permissions.canWriteVehicles) {
+    return;
+  }
+
+  const selectedVehicle = vehicles.find((vehicle) => vehicle.id === vehicleViewerState.vehicleId);
+  if (!selectedVehicle || !Array.isArray(selectedVehicle.drawerInventory) || !vehicleViewerState.activeDrawerId) {
+    return;
+  }
+
+  const drawer = selectedVehicle.drawerInventory.find((candidate) => candidate.id === vehicleViewerState.activeDrawerId);
+  if (!drawer) {
+    return;
+  }
+
+  if (!Array.isArray(drawer.items)) {
+    drawer.items = normalizeDrawerItems(drawer);
+  }
+
+  if (vehicleViewerState.activeDrawerItemIndex >= drawer.items.length) {
+    vehicleViewerState.activeDrawerItemIndex = 0;
+  }
+
+  if (!drawer.items[vehicleViewerState.activeDrawerItemIndex]) {
+    drawer.items[vehicleViewerState.activeDrawerItemIndex] = {
+      nombre: "Nuevo objeto",
+      estado: "Pendiente",
+      imagen: "logo.png",
+      descripcion: ""
+    };
+  }
+
+  const activeItem = drawer.items[vehicleViewerState.activeDrawerItemIndex];
+
+  activeItem.nombre = String(vehicleDrawerItemNameInput.value || "").trim();
+  activeItem.estado = String(vehicleDrawerItemStatusInput.value || "").trim();
+  activeItem.imagen = String(vehicleDrawerItemImageInput.value || "").trim() || "logo.png";
+  activeItem.descripcion = String(vehicleDrawerItemDescriptionInput.value || "").trim();
+  vehicleViewerState.dirtyMedia = true;
+
+  renderVehiclePhotoViewer(getFilteredVehicles());
+}
+
+function onVehicleHotspotPointerDown(event, drawerId) {
+  if (!vehicleViewerState.editMode || !permissions.canWriteVehicles) {
+    return;
+  }
+
+  event.preventDefault();
+  vehicleViewerState.draggingDrawerId = drawerId;
+  vehicleViewerState.dragActive = true;
+  vehicleViewerState.activeDrawerId = drawerId;
+
+  const target = event.currentTarget;
+  if (target && typeof target.setPointerCapture === "function") {
+    try {
+      target.setPointerCapture(event.pointerId);
+    } catch {
+      // Ignora si el navegador no permite capturar el puntero.
+    }
+  }
+}
+
+function onVehicleHotspotPointerMove(event) {
+  if (!vehicleViewerState.dragActive || !vehicleViewerState.draggingDrawerId) {
+    return;
+  }
+
+  const selectedVehicle = vehicles.find((vehicle) => vehicle.id === vehicleViewerState.vehicleId);
+  if (!selectedVehicle || !Array.isArray(selectedVehicle.drawerInventory)) {
+    return;
+  }
+
+  const drawer = selectedVehicle.drawerInventory.find((candidate) => candidate.id === vehicleViewerState.draggingDrawerId);
+  if (!drawer) {
+    return;
+  }
+
+  const bounds = vehiclePhotoStage.getBoundingClientRect();
+  if (bounds.width <= 0 || bounds.height <= 0) {
+    return;
+  }
+
+  const x = clamp(((event.clientX - bounds.left) / bounds.width) * 100, 0, 100);
+  const y = clamp(((event.clientY - bounds.top) / bounds.height) * 100, 0, 100);
+
+  drawer.x = x;
+  drawer.y = y;
+  vehicleViewerState.dirtyMedia = true;
+
+  const hotspot = vehicleHotspotsLayer.querySelector(`[data-drawer-id="${drawer.id}"]`);
+  if (hotspot) {
+    hotspot.style.left = `${x}%`;
+    hotspot.style.top = `${y}%`;
+  }
+
+  vehicleDrawerXRange.value = String(Math.round(x));
+  vehicleDrawerYRange.value = String(Math.round(y));
+  vehicleDrawerCoordsLabel.textContent = `Coordenadas de ${drawer.id}: X ${Math.round(x)}% / Y ${Math.round(y)}%`;
+}
+
+function onVehicleHotspotPointerUp() {
+  if (!vehicleViewerState.dragActive) {
+    return;
+  }
+
+  vehicleViewerState.draggingDrawerId = "";
+  vehicleViewerState.dragActive = false;
+  renderVehiclePhotoViewer(getFilteredVehicles());
+}
+
+function validateVehicleViewerData(vehicle) {
+  const errors = [];
+
+  if (!vehicle || !Array.isArray(vehicle.drawerInventory)) {
+    return ["No hay datos de gavetas para validar."];
+  }
+
+  const ids = new Set();
+  vehicle.drawerInventory.forEach((drawer) => {
+    const drawerId = String(drawer?.id || "").trim();
+    if (!drawerId) {
+      errors.push("Existe una gaveta sin identificador.");
+      return;
+    }
+
+    const key = drawerId.toLowerCase();
+    if (ids.has(key)) {
+      errors.push(`ID duplicado de gaveta: ${drawerId}.`);
+    }
+    ids.add(key);
+
+    const nombre = String(drawer?.nombre || "").trim();
+    if (!nombre) {
+      errors.push(`La gaveta ${drawerId} no tiene nombre.`);
+    }
+
+    const items = normalizeDrawerItems(drawer);
+    if (items.length < 1) {
+      errors.push(`La gaveta ${drawerId} debe tener al menos un ítem.`);
+      return;
+    }
+
+    const invalidItem = items.find((item) => {
+      const itemNombre = String(item?.nombre || "").trim();
+      const itemEstado = String(item?.estado || "").trim();
+      const itemDescripcion = String(item?.descripcion || "").trim();
+      return !itemNombre || !itemEstado || !itemDescripcion;
+    });
+
+    if (invalidItem) {
+      errors.push(`La gaveta ${drawerId} tiene un ítem incompleto (nombre, estado y descripción son obligatorios).`);
+    }
+  });
+
+  return errors;
+}
+
+function generateNextDrawerId(vehicle) {
+  const code = String(vehicle?.codigo || "CARRO").toUpperCase().replace(/\s+/g, "-");
+  const existing = new Set(
+    (Array.isArray(vehicle?.drawerInventory) ? vehicle.drawerInventory : [])
+      .map((drawer) => String(drawer?.id || "").trim().toUpperCase())
+      .filter(Boolean)
+  );
+
+  for (let i = 1; i <= 999; i += 1) {
+    const candidate = `${code}-G${String(i).padStart(2, "0")}`;
+    if (!existing.has(candidate)) {
+      return candidate;
+    }
+  }
+
+  return `${code}-G${Date.now()}`;
+}
+
+function onDrawerCoordinateRangeInput() {
+  if (!permissions.canWriteVehicles) {
+    return;
+  }
+
+  const selectedVehicle = vehicles.find((vehicle) => vehicle.id === vehicleViewerState.vehicleId);
+  if (!selectedVehicle || !Array.isArray(selectedVehicle.drawerInventory) || !vehicleViewerState.activeDrawerId) {
+    return;
+  }
+
+  const drawer = selectedVehicle.drawerInventory.find((candidate) => candidate.id === vehicleViewerState.activeDrawerId);
+  if (!drawer) {
+    return;
+  }
+
+  drawer.x = clamp(Number(vehicleDrawerXRange.value), 0, 100);
+  drawer.y = clamp(Number(vehicleDrawerYRange.value), 0, 100);
+  vehicleViewerState.dirtyMedia = true;
+  renderVehiclePhotoViewer(getFilteredVehicles());
+}
+
+function onVehiclePhotoStageClick(event) {
+  if (!vehicleViewerState.editMode || !permissions.canWriteVehicles) {
+    return;
+  }
+
+  if (!vehicleViewerState.activeDrawerId) {
+    return;
+  }
+
+  if (event.target.closest(".vehicle-hotspot")) {
+    return;
+  }
+
+  const selectedVehicle = vehicles.find((vehicle) => vehicle.id === vehicleViewerState.vehicleId);
+  if (!selectedVehicle || !Array.isArray(selectedVehicle.drawerInventory)) {
+    return;
+  }
+
+  const drawer = selectedVehicle.drawerInventory.find((candidate) => candidate.id === vehicleViewerState.activeDrawerId);
+  if (!drawer) {
+    return;
+  }
+
+  const bounds = vehiclePhotoStage.getBoundingClientRect();
+  if (bounds.width <= 0 || bounds.height <= 0) {
+    return;
+  }
+
+  const x = ((event.clientX - bounds.left) / bounds.width) * 100;
+  const y = ((event.clientY - bounds.top) / bounds.height) * 100;
+
+  drawer.x = clamp(x, 0, 100);
+  drawer.y = clamp(y, 0, 100);
+  vehicleViewerState.dirtyMedia = true;
+  renderVehiclePhotoViewer(getFilteredVehicles());
+}
+
+function onPhotoInputChange(angle, value) {
+  if (!permissions.canWriteVehicles) {
+    return;
+  }
+
+  const selectedVehicle = vehicles.find((vehicle) => vehicle.id === vehicleViewerState.vehicleId);
+  if (!selectedVehicle) {
+    return;
+  }
+
+  const gallery = ensureVehicleGallery(selectedVehicle);
+  const target = gallery.find((entry) => entry.angle === angle);
+  if (!target) {
+    return;
+  }
+
+  const trimmed = String(value || "").trim();
+  target.image = trimmed || FALLBACK_VEHICLE_PHOTO_BY_ANGLE[angle];
+  vehicleViewerState.dirtyMedia = true;
+  renderVehiclePhotoViewer(getFilteredVehicles());
+}
+
+function onPhotoFileChange(angle, inputElement) {
+  if (!permissions.canWriteVehicles) {
+    return;
+  }
+
+  const file = inputElement?.files?.[0];
+  if (!file) {
+    return;
+  }
+
+  const reader = new FileReader();
+  reader.onload = () => {
+    onPhotoInputChange(angle, String(reader.result || ""));
+    inputElement.value = "";
+  };
+  reader.onerror = () => {
+    alert("No se pudo leer el archivo de imagen seleccionado.");
+  };
+  reader.readAsDataURL(file);
+}
+
+function ensureVehicleGallery(vehicle) {
+  if (!Array.isArray(vehicle.photoGallery)) {
+    vehicle.photoGallery = [];
+  }
+
+  const required = [
+    { angle: "left", label: "Lado izquierdo", image: FALLBACK_VEHICLE_PHOTO_BY_ANGLE.left },
+    { angle: "right", label: "Lado derecho", image: FALLBACK_VEHICLE_PHOTO_BY_ANGLE.right },
+    { angle: "rear", label: "Parte trasera", image: FALLBACK_VEHICLE_PHOTO_BY_ANGLE.rear }
+  ];
+
+  required.forEach((def) => {
+    const existing = vehicle.photoGallery.find((entry) => String(entry?.angle || "").toLowerCase() === def.angle);
+    if (!existing) {
+      vehicle.photoGallery.push({ ...def });
+    } else {
+      existing.angle = def.angle;
+      existing.label = existing.label || def.label;
+      existing.image = String(existing.image || def.image).trim();
+    }
+  });
+
+  vehicle.photoGallery = vehicle.photoGallery.filter((entry) => ["left", "right", "rear"].includes(String(entry?.angle || "").toLowerCase()));
+  return vehicle.photoGallery;
+}
+
+function buildVehicleUpdatePayload(vehicle) {
+  return {
+    nombre: getVehicleDisplayName(vehicle),
+    codigo: String(vehicle.codigo || "").trim(),
+    patente: String(vehicle.patente || "").trim(),
+    marcaModelo: String(vehicle.marcaModelo || "").trim(),
+    anio: Number(vehicle.anio || 0),
+    kilometraje: Number(vehicle.kilometraje || 0),
+    estadoOperativo: String(vehicle.estadoOperativo || "").trim(),
+    ultimaMantencion: String(vehicle.ultimaMantencion || "").trim(),
+    proximaMantencionKm: Number(vehicle.proximaMantencionKm || 0),
+    revisionTecnicaVencimiento: String(vehicle.revisionTecnicaVencimiento || "").trim(),
+    observaciones: String(vehicle.observaciones || "").trim(),
+    photoGallery: ensureVehicleGallery(vehicle),
+    drawerInventory: sanitizeDrawerInventoryForSave(Array.isArray(vehicle.drawerInventory) ? vehicle.drawerInventory : [])
+  };
+}
+
+function sanitizeDrawerInventoryForSave(drawers) {
+  return drawers.map((drawer) => ({
+    id: String(drawer?.id || "").trim(),
+    nombre: String(drawer?.nombre || "").trim(),
+    angle: String(drawer?.angle || "").trim().toLowerCase(),
+    x: clamp(Number(drawer?.x), 0, 100),
+    y: clamp(Number(drawer?.y), 0, 100),
+    items: normalizeDrawerItems(drawer)
+  }));
+}
+
+async function saveVehicleViewerChanges() {
+  if (!permissions.canWriteVehicles) {
+    alert("Tu rol es solo lectura. No puedes guardar cambios del visor.");
+    return;
+  }
+
+  if (!vehicleViewerState.dirtyMedia || vehicleViewerState.isSavingMedia) {
+    return;
+  }
+
+  const selectedVehicle = vehicles.find((vehicle) => vehicle.id === vehicleViewerState.vehicleId);
+  if (!selectedVehicle) {
+    alert("No hay carro seleccionado para guardar cambios.");
+    return;
+  }
+
+  const validationErrors = validateVehicleViewerData(selectedVehicle);
+  if (validationErrors.length > 0) {
+    vehicleEditorValidation.textContent = validationErrors[0];
+    vehicleEditorValidation.classList.remove("hidden");
+    vehicleMediaStatus.textContent = `Validación: ${validationErrors[0]}`;
+    return;
+  }
+
+  vehicleEditorValidation.textContent = "";
+  vehicleEditorValidation.classList.add("hidden");
+
+  vehicleViewerState.isSavingMedia = true;
+  renderVehiclePhotoViewer(getFilteredVehicles());
+
+  try {
+    await api(`/api/vehicles/${selectedVehicle.id}`, {
+      method: "PUT",
+      body: buildVehicleUpdatePayload(selectedVehicle)
+    });
+    vehicleViewerState.dirtyMedia = false;
+    await refreshVehicles();
+  } catch (error) {
+    alert(error.message || "No se pudieron guardar las fotos y hotspots del carro.");
+  } finally {
+    vehicleViewerState.isSavingMedia = false;
+    renderVehiclePhotoViewer(getFilteredVehicles());
+  }
+}
+
+function openVehicleDrawerPanel(drawer) {
+  if (!vehicleDrawerPanel) {
+    return;
+  }
+
+  const items = Array.isArray(drawer?.items) ? drawer.items : normalizeDrawerItems(drawer);
+  if (vehicleViewerState.activeDrawerItemIndex >= items.length) {
+    vehicleViewerState.activeDrawerItemIndex = 0;
+  }
+  const activeItem = items[vehicleViewerState.activeDrawerItemIndex] || items[0];
+
+  vehicleDrawerPanel.classList.remove("hidden");
+  vehicleDrawerTitle.textContent = drawer.nombre || drawer.id;
+  vehicleDrawerItemsCount.textContent = `Items: ${items.length}`;
+  vehicleDrawerPanelItemSelect.innerHTML = "";
+  items.forEach((item, index) => {
+    const option = document.createElement("option");
+    option.value = String(index);
+    option.textContent = `${index + 1}. ${item.nombre}`;
+    vehicleDrawerPanelItemSelect.appendChild(option);
+  });
+  vehicleDrawerPanelItemSelect.value = String(vehicleViewerState.activeDrawerItemIndex);
+  vehicleDrawerStatus.textContent = `Estado: ${activeItem?.estado || "Sin estado"}`;
+  vehicleDrawerItemName.textContent = activeItem?.nombre || "Sin item asignado";
+  vehicleDrawerItemDescription.textContent = activeItem?.descripcion || "Sin descripción.";
+  vehicleDrawerItemImage.src = activeItem?.imagen || "logo.png";
+  vehicleDrawerItemImage.alt = `Imagen del objeto ${activeItem?.nombre || "sin item"}`;
+}
+
+function closeVehicleDrawerPanel() {
+  if (!vehicleDrawerPanel) {
+    return;
+  }
+
+  vehicleViewerState.activeDrawerId = "";
+  vehicleViewerState.activeDrawerItemIndex = 0;
+  vehicleDrawerPanel.classList.add("hidden");
+  vehicleDrawerTitle.textContent = "-";
+  vehicleDrawerItemsCount.textContent = "Items: 0";
+  vehicleDrawerPanelItemSelect.innerHTML = "";
+  vehicleDrawerStatus.textContent = "Estado: -";
+  vehicleDrawerItemName.textContent = "-";
+  vehicleDrawerItemDescription.textContent = "-";
+  vehicleDrawerItemImage.src = "logo.png";
+  vehicleDrawerItemImage.alt = "Imagen del objeto en la gaveta";
+}
+
+function clamp(value, min, max) {
+  if (!Number.isFinite(value)) {
+    return min;
+  }
+  return Math.max(min, Math.min(max, value));
 }
 
 function getVehicleStatusClass(status) {
@@ -2261,6 +3556,7 @@ function startEditVehicle(id) {
   }
 
   vehicleId.value = vehicle.id;
+  vehiclesForm.nombre.value = getVehicleDisplayName(vehicle);
   vehiclesForm.codigo.value = vehicle.codigo || "";
   vehiclesForm.patente.value = vehicle.patente || "";
   vehiclesForm.marcaModelo.value = vehicle.marcaModelo || "";
@@ -2314,6 +3610,7 @@ async function onVehicleSubmit(event) {
 
   const formData = new FormData(vehiclesForm);
   const payload = {
+    nombre: String(formData.get("nombre") || "").trim(),
     codigo: String(formData.get("codigo") || "").trim(),
     patente: String(formData.get("patente") || "").trim(),
     marcaModelo: String(formData.get("marcaModelo") || "").trim(),
@@ -2326,12 +3623,18 @@ async function onVehicleSubmit(event) {
     observaciones: String(formData.get("observaciones") || "").trim()
   };
 
+  const currentVehicle = vehicles.find((vehicle) => vehicle.id === vehicleId.value);
+  if (currentVehicle) {
+    payload.photoGallery = Array.isArray(currentVehicle.photoGallery) ? currentVehicle.photoGallery : [];
+    payload.drawerInventory = Array.isArray(currentVehicle.drawerInventory) ? currentVehicle.drawerInventory : [];
+  }
+
   if (!payload.proximaMantencionKm) {
     payload.proximaMantencionKm = 0;
   }
 
-  if (!payload.codigo || !payload.patente || !payload.marcaModelo || !payload.anio || !payload.estadoOperativo) {
-    alert("Completa codigo, patente, marca/modelo, año y estado operativo.");
+  if (!payload.nombre || !payload.codigo || !payload.patente || !payload.marcaModelo || !payload.anio || !payload.estadoOperativo) {
+    alert("Completa nombre, codigo, patente, marca/modelo, año y estado operativo.");
     return;
   }
 

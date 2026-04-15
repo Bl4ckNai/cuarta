@@ -2,13 +2,48 @@ const express = require("express");
 const fs = require("fs");
 const path = require("path");
 const crypto = require("crypto");
+const multer = require("multer");
 const PDFDocument = require("pdfkit");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 const DB_PATH = path.join(__dirname, "data", "db.json");
+const DAY_ORDERS_UPLOAD_DIR = path.join(__dirname, "uploads", "day-orders");
 const MEDICAL_SECRET = process.env.MEDICAL_SECRET || "inv-cuarta-medical-default-secret-change-me";
 const MEDICAL_KEY = crypto.scryptSync(MEDICAL_SECRET, "medical-records-salt", 32);
+
+const dayOrdersPdfUpload = multer({
+  storage: multer.diskStorage({
+    destination: (req, _file, cb) => {
+      const companyId = String(req?.user?.companyId || "company-default").trim();
+      const targetDir = path.join(DAY_ORDERS_UPLOAD_DIR, companyId);
+      fs.mkdirSync(targetDir, { recursive: true });
+      cb(null, targetDir);
+    },
+    filename: (_req, file, cb) => {
+      const safeBase = String(path.parse(file.originalname || "orden-dia").name || "orden-dia")
+        .replace(/[^a-zA-Z0-9-_]/g, "-")
+        .replace(/-+/g, "-")
+        .slice(0, 70);
+      const stamp = `${Date.now()}-${Math.floor(Math.random() * 100000)}`;
+      cb(null, `${stamp}-${safeBase}.pdf`);
+    }
+  }),
+  fileFilter: (_req, file, cb) => {
+    const mimetype = String(file?.mimetype || "").toLowerCase();
+    const originalName = String(file?.originalname || "").toLowerCase();
+    const isPdfMime = mimetype === "application/pdf" || mimetype === "application/x-pdf";
+    const isPdfByName = originalName.endsWith(".pdf");
+    if (!isPdfMime && !isPdfByName) {
+      cb(new Error("Solo se permiten archivos PDF."));
+      return;
+    }
+    cb(null, true);
+  },
+  limits: {
+    fileSize: 10 * 1024 * 1024
+  }
+});
 
 const sessions = new Map();
 
@@ -442,6 +477,19 @@ app.get("/api/day-orders", authRequired, (req, res) => {
   res.json({ orders });
 });
 
+app.get("/api/day-orders/pdfs", authRequired, (req, res) => {
+  const db = readDb();
+  const pdfs = (Array.isArray(db.dayOrderPdfs) ? db.dayOrderPdfs : [])
+    .filter((pdf) => pdf.companyId === req.user.companyId)
+    .sort((a, b) => {
+      const aDate = new Date(a.uploadedAt || 0).getTime();
+      const bDate = new Date(b.uploadedAt || 0).getTime();
+      return bDate - aDate;
+    });
+
+  res.json({ pdfs });
+});
+
 app.get("/api/vehicles", authRequired, (req, res) => {
   const db = readDb();
   const query = {
@@ -457,7 +505,7 @@ app.get("/api/vehicles", authRequired, (req, res) => {
 
   if (query.q) {
     vehicles = vehicles.filter((vehicle) => {
-      const haystack = `${vehicle.codigo || ""} ${vehicle.patente || ""} ${vehicle.marcaModelo || ""} ${vehicle.observaciones || ""}`.toLowerCase();
+      const haystack = `${vehicle.nombre || ""} ${vehicle.codigo || ""} ${vehicle.patente || ""} ${vehicle.marcaModelo || ""} ${vehicle.observaciones || ""}`.toLowerCase();
       return haystack.includes(query.q);
     });
   }
@@ -470,6 +518,24 @@ app.get("/api/vehicles", authRequired, (req, res) => {
   });
 
   res.json({ vehicles });
+});
+
+app.get("/api/vehicles/:id/drawers", authRequired, (req, res) => {
+  const db = readDb();
+  const vehicle = db.vehicles.find(
+    (candidate) => candidate.id === req.params.id && candidate.companyId === req.user.companyId
+  );
+
+  if (!vehicle) {
+    return res.status(404).json({ error: "Carro no encontrado." });
+  }
+
+  return res.json({
+    vehicleId: vehicle.id,
+    codigo: vehicle.codigo,
+    photoGallery: Array.isArray(vehicle.photoGallery) ? vehicle.photoGallery : [],
+    drawers: Array.isArray(vehicle.drawerInventory) ? vehicle.drawerInventory : []
+  });
 });
 
 app.post("/api/vehicles", authRequired, (req, res) => {
@@ -494,6 +560,7 @@ app.post("/api/vehicles", authRequired, (req, res) => {
   const vehicle = {
     id: crypto.randomUUID(),
     companyId: req.user.companyId,
+    nombre: payload.nombre,
     codigo: payload.codigo,
     patente: payload.patente,
     marcaModelo: payload.marcaModelo,
@@ -504,6 +571,14 @@ app.post("/api/vehicles", authRequired, (req, res) => {
     proximaMantencionKm: payload.proximaMantencionKm,
     revisionTecnicaVencimiento: payload.revisionTecnicaVencimiento,
     observaciones: payload.observaciones,
+    photoGallery:
+      Array.isArray(payload.photoGallery) && payload.photoGallery.length > 0
+        ? payload.photoGallery
+        : getDefaultVehiclePhotoGallery(),
+    drawerInventory:
+      Array.isArray(payload.drawerInventory) && payload.drawerInventory.length > 0
+        ? payload.drawerInventory
+        : getDefaultVehicleDrawerInventory(payload.codigo),
     actualizadoEn: new Date().toISOString(),
     actualizadoPor: req.user.nombre
   };
@@ -546,6 +621,7 @@ app.put("/api/vehicles/:id", authRequired, (req, res) => {
 
   const updated = {
     ...db.vehicles[index],
+    nombre: payload.nombre,
     codigo: payload.codigo,
     patente: payload.patente,
     marcaModelo: payload.marcaModelo,
@@ -556,6 +632,14 @@ app.put("/api/vehicles/:id", authRequired, (req, res) => {
     proximaMantencionKm: payload.proximaMantencionKm,
     revisionTecnicaVencimiento: payload.revisionTecnicaVencimiento,
     observaciones: payload.observaciones,
+    photoGallery:
+      Array.isArray(payload.photoGallery) && payload.photoGallery.length > 0
+        ? payload.photoGallery
+        : db.vehicles[index].photoGallery || getDefaultVehiclePhotoGallery(),
+    drawerInventory:
+      Array.isArray(payload.drawerInventory) && payload.drawerInventory.length > 0
+        ? payload.drawerInventory
+        : db.vehicles[index].drawerInventory || getDefaultVehicleDrawerInventory(payload.codigo),
     actualizadoEn: new Date().toISOString(),
     actualizadoPor: req.user.nombre
   };
@@ -735,6 +819,48 @@ app.post("/api/day-orders", authRequired, (req, res) => {
   writeDb(db);
 
   res.status(201).json({ order });
+});
+
+app.post("/api/day-orders/pdfs/upload", authRequired, (req, res) => {
+  if (!hasUserPermission(req.user, "canWriteDayOrders")) {
+    return res.status(403).json({ error: "No tienes permiso para subir PDFs de ordenes del dia." });
+  }
+
+  dayOrdersPdfUpload.single("pdf")(req, res, (error) => {
+    if (error) {
+      const message = error.code === "LIMIT_FILE_SIZE" ? "El PDF excede el tamaño máximo de 10 MB." : error.message;
+      return res.status(400).json({ error: message || "No se pudo subir el PDF." });
+    }
+
+    if (!req.file) {
+      return res.status(400).json({ error: "Debes seleccionar un archivo PDF." });
+    }
+
+    const db = readDb();
+    const titulo = String(req.body?.titulo || "").trim() || String(path.parse(req.file.originalname).name || "Orden del dia").trim();
+    const relativePath = path.relative(__dirname, req.file.path).replaceAll("\\", "/");
+    const fileUrl = `/${relativePath}`;
+
+    const pdfRecord = {
+      id: crypto.randomUUID(),
+      companyId: req.user.companyId,
+      titulo,
+      originalName: req.file.originalname,
+      fileName: req.file.filename,
+      fileUrl,
+      uploadedAt: new Date().toISOString(),
+      uploadedBy: req.user.nombre
+    };
+
+    if (!Array.isArray(db.dayOrderPdfs)) {
+      db.dayOrderPdfs = [];
+    }
+
+    db.dayOrderPdfs.push(pdfRecord);
+    writeDb(db);
+
+    return res.status(201).json({ pdf: pdfRecord });
+  });
 });
 
 app.put("/api/day-orders/:id", authRequired, (req, res) => {
@@ -1168,6 +1294,7 @@ function ensureDb() {
       medicalRecords: [],
       volunteerCourses: [],
       dayOrders: [],
+      dayOrderPdfs: [],
       vehicles: [],
       uniformInventory: []
     };
@@ -1281,6 +1408,7 @@ function normalizeDb(db) {
   const safeMedicalRecords = Array.isArray(db.medicalRecords) ? db.medicalRecords : [];
   const safeVolunteerCourses = Array.isArray(db.volunteerCourses) ? db.volunteerCourses : [];
   const safeDayOrders = Array.isArray(db.dayOrders) ? db.dayOrders : [];
+  const safeDayOrderPdfs = Array.isArray(db.dayOrderPdfs) ? db.dayOrderPdfs : [];
   const safeVehicles = Array.isArray(db.vehicles) ? db.vehicles : [];
   const safeUniformInventory = Array.isArray(db.uniformInventory) ? db.uniformInventory : [];
 
@@ -1300,6 +1428,7 @@ function normalizeDb(db) {
     medicalRecords: safeMedicalRecords,
     volunteerCourses: safeVolunteerCourses,
     dayOrders: safeDayOrders,
+    dayOrderPdfs: safeDayOrderPdfs,
     vehicles: safeVehicles,
     uniformInventory: safeUniformInventory
   };
@@ -1390,6 +1519,7 @@ function sanitizeUniformRecord(body) {
 function sanitizeVehicle(body) {
   const allowedStates = ["Disponible", "En Servicio", "En Mantenimiento", "Fuera de Servicio"];
 
+  const nombre = String(body.nombre || "").trim();
   const codigo = String(body.codigo || "").trim();
   const patente = String(body.patente || "").trim();
   const marcaModelo = String(body.marcaModelo || "").trim();
@@ -1400,9 +1530,15 @@ function sanitizeVehicle(body) {
   const proximaMantencionKm = Number(body.proximaMantencionKm || 0);
   const revisionTecnicaVencimiento = String(body.revisionTecnicaVencimiento || "").trim();
   const observaciones = String(body.observaciones || "").trim();
+  const hasPhotoGallery = Array.isArray(body.photoGallery);
+  const hasDrawerInventory = Array.isArray(body.drawerInventory);
+  const photoGallery = hasPhotoGallery ? sanitizeVehiclePhotoGallery(body.photoGallery) : null;
+  const drawerInventory = hasDrawerInventory ? sanitizeVehicleDrawerInventory(body.drawerInventory) : null;
 
-  if (!codigo || !patente || !marcaModelo || !Number.isFinite(anio) || !Number.isFinite(kilometraje) || !estadoOperativo) {
-    return { ok: false, error: "Completa codigo, patente, marca/modelo, año, kilometraje y estado operativo." };
+  const resolvedNombre = nombre || marcaModelo || codigo;
+
+  if (!resolvedNombre || !codigo || !patente || !marcaModelo || !Number.isFinite(anio) || !Number.isFinite(kilometraje) || !estadoOperativo) {
+    return { ok: false, error: "Completa nombre, codigo, patente, marca/modelo, año, kilometraje y estado operativo." };
   }
 
   if (anio < 1950 || anio > 2100) {
@@ -1429,8 +1565,28 @@ function sanitizeVehicle(body) {
     return { ok: false, error: "La proxima mantencion en km debe ser mayor o igual a 0." };
   }
 
+  if (photoGallery && !photoGallery.ok) {
+    return { ok: false, error: photoGallery.error };
+  }
+
+  if (drawerInventory && !drawerInventory.ok) {
+    return { ok: false, error: drawerInventory.error };
+  }
+
+  if (photoGallery && drawerInventory) {
+    const validAngles = new Set(photoGallery.items.map((entry) => entry.angle));
+    const invalidDrawer = drawerInventory.items.find((drawer) => !validAngles.has(drawer.angle));
+    if (invalidDrawer) {
+      return {
+        ok: false,
+        error: `La gaveta ${invalidDrawer.id} usa un angulo que no existe en la galeria.`
+      };
+    }
+  }
+
   return {
     ok: true,
+    nombre: resolvedNombre,
     codigo,
     patente,
     marcaModelo,
@@ -1440,8 +1596,167 @@ function sanitizeVehicle(body) {
     ultimaMantencion,
     proximaMantencionKm,
     revisionTecnicaVencimiento,
-    observaciones
+    observaciones,
+    photoGallery: photoGallery ? photoGallery.items : null,
+    drawerInventory: drawerInventory ? drawerInventory.items : null
   };
+}
+
+function sanitizeVehiclePhotoGallery(entries) {
+  const allowedAngles = ["left", "right", "rear"];
+
+  if (!Array.isArray(entries)) {
+    return { ok: false, error: "La galeria de fotos debe ser un arreglo." };
+  }
+
+  const normalized = entries.map((entry) => ({
+    angle: String(entry?.angle || "").trim().toLowerCase(),
+    label: String(entry?.label || "").trim(),
+    image: String(entry?.image || "").trim()
+  }));
+
+  const invalid = normalized.find((entry) => !allowedAngles.includes(entry.angle) || !entry.image);
+  if (invalid) {
+    return { ok: false, error: "Cada foto de la galeria debe incluir angle valido e image." };
+  }
+
+  const seen = new Set();
+  for (const entry of normalized) {
+    if (seen.has(entry.angle)) {
+      return { ok: false, error: "No se pueden repetir angulos en la galeria del carro." };
+    }
+    seen.add(entry.angle);
+  }
+
+  return { ok: true, items: normalized };
+}
+
+function sanitizeVehicleDrawerInventory(entries) {
+  const allowedAngles = ["left", "right", "rear"];
+
+  if (!Array.isArray(entries)) {
+    return { ok: false, error: "La lista de gavetas debe ser un arreglo." };
+  }
+
+  const normalized = entries.map((entry) => {
+    const id = String(entry?.id || "").trim();
+    const nombre = String(entry?.nombre || "").trim();
+    const angle = String(entry?.angle || "").trim().toLowerCase();
+    const x = Number(entry?.x);
+    const y = Number(entry?.y);
+    const sourceItems = Array.isArray(entry?.items)
+      ? entry.items
+      : entry?.item
+        ? [entry.item]
+        : [];
+
+    const items = sourceItems.map((item) => ({
+      nombre: String(item?.nombre || "").trim(),
+      estado: String(item?.estado || "").trim(),
+      imagen: String(item?.imagen || "").trim() || "logo.png",
+      descripcion: String(item?.descripcion || "").trim()
+    }));
+
+    return { id, nombre, angle, x, y, items };
+  });
+
+  const invalid = normalized.find((drawer) => {
+    if (!drawer.id || !drawer.nombre || !allowedAngles.includes(drawer.angle)) {
+      return true;
+    }
+    if (!Number.isFinite(drawer.x) || !Number.isFinite(drawer.y) || drawer.x < 0 || drawer.x > 100 || drawer.y < 0 || drawer.y > 100) {
+      return true;
+    }
+    if (!Array.isArray(drawer.items) || drawer.items.length < 1) {
+      return true;
+    }
+
+    const invalidItem = drawer.items.find((item) => {
+      return !item.nombre || !item.estado || !item.descripcion;
+    });
+
+    if (invalidItem) {
+      return true;
+    }
+    return false;
+  });
+
+  if (invalid) {
+    return {
+      ok: false,
+      error: "Cada gaveta debe incluir id, nombre, angle, coordenadas x/y (0-100) y al menos un item completo."
+    };
+  }
+
+  const seen = new Set();
+  for (const drawer of normalized) {
+    const key = drawer.id.toLowerCase();
+    if (seen.has(key)) {
+      return { ok: false, error: "Los ids de gaveta deben ser unicos por carro." };
+    }
+    seen.add(key);
+  }
+
+  return { ok: true, items: normalized };
+}
+
+function getDefaultVehiclePhotoGallery() {
+  return [
+    { angle: "left", label: "Lado izquierdo", image: "assets/vehicle-gallery/truck-left.svg" },
+    { angle: "right", label: "Lado derecho", image: "assets/vehicle-gallery/truck-right.svg" },
+    { angle: "rear", label: "Parte trasera", image: "assets/vehicle-gallery/truck-rear.svg" }
+  ];
+}
+
+function getDefaultVehicleDrawerInventory(vehicleCode) {
+  const code = String(vehicleCode || "CARRO").toUpperCase().replace(/\s+/g, "-");
+  return [
+    {
+      id: `${code}-G01`,
+      nombre: "Gaveta herramientas rapidas",
+      angle: "left",
+      x: 27,
+      y: 58,
+      items: [
+        {
+          nombre: "Kit de herramientas rapidas",
+          estado: "Operativo",
+          imagen: "logo.png",
+          descripcion: "Incluye llaves, alicates y elementos de ajuste para intervenciones cortas."
+        }
+      ]
+    },
+    {
+      id: `${code}-G02`,
+      nombre: "Gaveta material absorbente",
+      angle: "right",
+      x: 68,
+      y: 61,
+      items: [
+        {
+          nombre: "Absorbente industrial",
+          estado: "Operativo",
+          imagen: "logo.png",
+          descripcion: "Sacos absorbentes para control de derrames y contención inicial."
+        }
+      ]
+    },
+    {
+      id: `${code}-G03`,
+      nombre: "Gaveta señalizacion trasera",
+      angle: "rear",
+      x: 52,
+      y: 66,
+      items: [
+        {
+          nombre: "Conos y balizas",
+          estado: "Operativo",
+          imagen: "logo.png",
+          descripcion: "Conjunto de conos reflectantes y balizas para asegurar el perímetro."
+        }
+      ]
+    }
+  ];
 }
 
 function sanitizeDayOrder(body) {

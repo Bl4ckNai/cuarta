@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 675" role="img" aria-labelledby="title desc">
+  <title id="title">Carro de bomberos - lado izquierdo</title>
+  <desc id="desc">Ilustración de referencia para ubicar gavetas del lado izquierdo.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#1a2028" />
+      <stop offset="100%" stop-color="#0f141a" />
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="675" fill="url(#bg)" />
+  <rect x="130" y="280" width="780" height="180" rx="18" fill="#c62828" />
+  <rect x="780" y="240" width="220" height="220" rx="16" fill="#d83a3a" />
+  <rect x="820" y="270" width="120" height="70" rx="8" fill="#8fb7d4" />
+  <rect x="210" y="315" width="180" height="95" rx="8" fill="#871818" stroke="#f7d4d4" stroke-width="3" />
+  <rect x="430" y="315" width="180" height="95" rx="8" fill="#871818" stroke="#f7d4d4" stroke-width="3" />
+  <rect x="650" y="315" width="180" height="95" rx="8" fill="#871818" stroke="#f7d4d4" stroke-width="3" />
+  <circle cx="300" cy="500" r="54" fill="#212932" stroke="#5e6a76" stroke-width="12" />
+  <circle cx="780" cy="500" r="54" fill="#212932" stroke="#5e6a76" stroke-width="12" />
+  <text x="70" y="84" fill="#f5f7fa" font-size="42" font-family="Verdana, Arial, sans-serif" font-weight="700">Vista lateral izquierda</text>
+  <text x="70" y="122" fill="#cfd7df" font-size="22" font-family="Verdana, Arial, sans-serif">Imagen de referencia para hotspots de gavetas</text>
+</svg>
