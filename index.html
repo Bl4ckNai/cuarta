@@ -50,9 +50,6 @@
            <li class="nav-item">
              <a class="nav-link" href="#" id="menuOpenUniforms">Inventario de Uniformes</a>
            </li>
-          <li class="nav-item">
-            <a class="nav-link hidden" href="#" id="menuOpenUsers">Gestión de Usuarios</a>
-          </li>
         </ul>
       </div>
 
@@ -130,6 +127,35 @@
             <button id="quickScanQrBtn" class="btn btn-primary" type="button">Escanear QR</button>
             <button id="quickNewRecordBtn" class="btn btn-secondary" type="button">Nuevo Registro</button>
             <button id="quickReportBtn" class="btn btn-secondary" type="button">Generar Reporte</button>
+            <button id="autoApplySavedFiltersBtn" class="btn btn-secondary" type="button">Auto filtros: ON</button>
+            <button id="clearAllSavedFiltersBtn" class="btn btn-secondary" type="button">Limpiar filtros guardados</button>
+          </div>
+          <div class="quick-last-module" aria-live="polite">
+            <div>
+              <p class="quick-last-module-label">Ultimo modulo usado</p>
+              <p id="lastModuleLabel" class="quick-last-module-value">Aun no abriste ningun modulo.</p>
+            </div>
+            <button id="reopenLastModuleBtn" class="btn btn-secondary" type="button" hidden>Reabrir</button>
+          </div>
+          <p id="savedFiltersModeHint" class="quick-mode-hint">Los módulos abrirán con filtros guardados mientras el auto filtro esté activo.</p>
+          <div class="quick-search-wrap">
+            <input
+              id="quickGlobalSearchInput"
+              type="search"
+              placeholder="Buscar en inventario, guardia, cursos, ordenes, carros, uniformes..."
+              aria-label="Busqueda global rapida"
+            />
+            <button id="quickGlobalSearchBtn" class="btn btn-secondary" type="button">Buscar en módulos</button>
+          </div>
+          <div class="quick-kpi-row" aria-label="Indicadores operativos rapidos">
+            <article class="quick-kpi-card">
+              <h4 id="homeVehiclesUnavailableCount">0</h4>
+              <p>Carros no disponibles</p>
+            </article>
+            <article class="quick-kpi-card">
+              <h4 id="homeUniformCriticalCount">0</h4>
+              <p>Uniformes críticos</p>
+            </article>
           </div>
         </article>
 
@@ -152,6 +178,20 @@
             </div>
           </li>
         </ul>
+      </article>
+
+      <article class="home-card latest-pdf-card">
+        <h3>Última Orden del Día (PDF)</h3>
+        <p id="latestDayOrderPdfMeta" class="hint">No hay PDF cargado todavía.</p>
+        <div class="latest-pdf-viewer-wrap">
+          <iframe
+            id="latestDayOrderPdfFrame"
+            title="Último PDF de orden del día"
+            src=""
+            loading="lazy"
+          ></iframe>
+        </div>
+        <a id="latestDayOrderPdfLink" class="btn btn-secondary" href="#" target="_blank" rel="noopener" hidden>Abrir PDF en nueva pestaña</a>
       </article>
     </div>
   </section>
@@ -214,6 +254,7 @@
     <section class="panel table-panel">
       <div class="table-header">
         <h3>Inventario Actual</h3>
+        <span id="inventoryModeBadge" class="module-mode-badge">Modo: filtros guardados</span>
         <div class="table-controls">
           <input id="searchInput" type="search" placeholder="Buscar por nombre, categoría o ubicación..." />
           <select id="filterEstado" aria-label="Filtrar por estado">
@@ -225,6 +266,9 @@
           <button id="exportCsvBtn" class="btn btn-secondary">Exportar CSV</button>
           <button id="reportInventoryBtn" class="btn btn-secondary">PDF Inventario</button>
           <button id="reportExpiringBtn" class="btn btn-secondary">PDF Vencimientos</button>
+          <button id="saveInventoryFiltersBtn" class="btn btn-secondary" type="button">Guardar filtros</button>
+          <button id="loadInventoryFiltersBtn" class="btn btn-secondary" type="button">Cargar filtros</button>
+          <button id="resetInventoryFiltersBtn" class="btn btn-secondary" type="button">Restablecer</button>
         </div>
       </div>
 
@@ -362,6 +406,7 @@
     <div class="guard-modal-content panel feature-layout" role="dialog" aria-modal="true" aria-labelledby="guardModalTitle">
       <div class="table-header">
         <h3 id="guardModalTitle">Libro de Guardia</h3>
+        <span id="guardModeBadge" class="module-mode-badge">Modo: filtros guardados</span>
         <button id="closeGuardModalBtn" class="btn btn-secondary" type="button">Cerrar</button>
       </div>
 
@@ -380,6 +425,9 @@
           <option value="Evento">Evento</option>
           <option value="Observacion">Observación</option>
         </select>
+        <button id="saveGuardFiltersBtn" class="btn btn-secondary" type="button">Guardar filtros</button>
+        <button id="loadGuardFiltersBtn" class="btn btn-secondary" type="button">Cargar filtros</button>
+        <button id="resetGuardFiltersBtn" class="btn btn-secondary" type="button">Restablecer</button>
       </div>
 
       <form id="guardForm" class="guard-form">
@@ -442,11 +490,15 @@
     <div class="medical-modal-content panel feature-layout" role="dialog" aria-modal="true" aria-labelledby="medicalModalTitle">
       <div class="table-header">
         <h3 id="medicalModalTitle">Fichas Medicas de Voluntarios</h3>
+        <span id="medicalModeBadge" class="module-mode-badge">Modo: filtros guardados</span>
         <button id="closeMedicalModalBtn" class="btn btn-secondary" type="button">Cerrar</button>
       </div>
 
       <div class="table-controls medical-controls">
         <input id="medicalSearchInput" type="search" placeholder="Buscar por nombre o grupo sanguineo..." />
+        <button id="saveMedicalFiltersBtn" class="btn btn-secondary" type="button">Guardar filtros</button>
+        <button id="loadMedicalFiltersBtn" class="btn btn-secondary" type="button">Cargar filtros</button>
+        <button id="resetMedicalFiltersBtn" class="btn btn-secondary" type="button">Restablecer</button>
       </div>
 
       <form id="medicalForm" class="medical-form">
@@ -538,11 +590,15 @@
     <div class="courses-modal-content panel feature-layout" role="dialog" aria-modal="true" aria-labelledby="coursesModalTitle">
       <div class="table-header">
         <h3 id="coursesModalTitle">Cursos y Capacitaciones</h3>
+        <span id="coursesModeBadge" class="module-mode-badge">Modo: filtros guardados</span>
         <button id="closeCoursesModalBtn" class="btn btn-secondary" type="button">Cerrar</button>
       </div>
 
       <div class="table-controls courses-controls">
         <input id="coursesSearchInput" type="search" placeholder="Buscar por voluntario, curso, institucion o certificacion..." />
+        <button id="saveCoursesFiltersBtn" class="btn btn-secondary" type="button">Guardar filtros</button>
+        <button id="loadCoursesFiltersBtn" class="btn btn-secondary" type="button">Cargar filtros</button>
+        <button id="resetCoursesFiltersBtn" class="btn btn-secondary" type="button">Restablecer</button>
       </div>
 
       <form id="coursesForm" class="courses-form">
@@ -639,6 +695,7 @@
     <div class="dayorders-modal-content panel feature-layout" role="dialog" aria-modal="true" aria-labelledby="dayOrdersModalTitle">
       <div class="table-header">
         <h3 id="dayOrdersModalTitle">Ordenes del Dia</h3>
+        <span id="dayOrdersModeBadge" class="module-mode-badge">Modo: filtros guardados</span>
         <button id="closeDayOrdersModalBtn" class="btn btn-secondary" type="button">Cerrar</button>
       </div>
 
@@ -651,7 +708,28 @@
           <option value="Felicitacion">Felicitacion</option>
           <option value="Informacion">Informacion</option>
         </select>
+        <button id="saveDayOrdersFiltersBtn" class="btn btn-secondary" type="button">Guardar filtros</button>
+        <button id="loadDayOrdersFiltersBtn" class="btn btn-secondary" type="button">Cargar filtros</button>
+        <button id="resetDayOrdersFiltersBtn" class="btn btn-secondary" type="button">Restablecer</button>
       </div>
+
+      <section class="dayorders-pdf-upload panel-lite">
+        <h4>Subir PDF de Orden del Día</h4>
+        <div class="grid-3 dayorders-pdf-grid">
+          <div>
+            <label for="dayOrderPdfTitle">Título del PDF</label>
+            <input id="dayOrderPdfTitle" type="text" placeholder="Ej: Orden general guardia nocturna" />
+          </div>
+          <div>
+            <label for="dayOrderPdfFile">Archivo PDF</label>
+            <input id="dayOrderPdfFile" type="file" accept="application/pdf" />
+          </div>
+          <div class="user-actions-wrap">
+            <button id="uploadDayOrderPdfBtn" class="btn btn-primary" type="button">Subir PDF</button>
+          </div>
+        </div>
+        <p id="dayOrderPdfUploadStatus" class="hint">El último PDF subido se mostrará automáticamente en Inicio.</p>
+      </section>
 
       <form id="dayOrdersForm" class="dayorders-form">
         <input type="hidden" id="dayOrderId" />
@@ -717,6 +795,7 @@
      <div class="vehicles-modal-content panel feature-layout" role="dialog" aria-modal="true" aria-labelledby="vehiclesModalTitle">
        <div class="table-header">
          <h3 id="vehiclesModalTitle">Carros y Flota Operativa</h3>
+         <span id="vehiclesModeBadge" class="module-mode-badge">Modo: filtros guardados</span>
          <button id="closeVehiclesModalBtn" class="btn btn-secondary" type="button">Cerrar</button>
        </div>
 
@@ -729,12 +808,146 @@
            <option value="En Mantenimiento">En Mantenimiento</option>
            <option value="Fuera de Servicio">Fuera de Servicio</option>
          </select>
+         <button id="saveVehiclesFiltersBtn" class="btn btn-secondary" type="button">Guardar filtros</button>
+         <button id="loadVehiclesFiltersBtn" class="btn btn-secondary" type="button">Cargar filtros</button>
+         <button id="resetVehiclesFiltersBtn" class="btn btn-secondary" type="button">Restablecer</button>
        </div>
+
+        <section class="vehicle-photo-viewer" aria-label="Visor fotográfico de carro y gavetas">
+          <div class="vehicle-photo-topbar">
+            <div class="vehicle-photo-select-wrap">
+              <label for="vehiclesViewerVehicle">Carro en visor</label>
+              <select id="vehiclesViewerVehicle" aria-label="Seleccionar carro para visor de gavetas"></select>
+            </div>
+            <div id="vehicleViewerAngles" class="vehicle-angle-tabs" role="tablist" aria-label="Seleccionar ángulo de foto"></div>
+          </div>
+
+          <div class="vehicle-photo-actions">
+            <button id="toggleVehicleEditorBtn" class="btn btn-secondary" type="button">Editar hotspots y fotos</button>
+            <button id="saveVehicleViewerChangesBtn" class="btn btn-primary" type="button" disabled>Guardar cambios del visor</button>
+            <button id="createVehicleQuickBtn" class="btn btn-secondary" type="button">Agregar carro rápido</button>
+            <button id="deleteVehicleQuickBtn" class="btn btn-secondary" type="button">Eliminar carro seleccionado</button>
+            <p id="vehicleMediaStatus" class="vehicle-media-status">Sin cambios pendientes.</p>
+          </div>
+
+          <section id="vehicleEditorPanel" class="vehicle-editor-panel hidden" aria-label="Editor visual de gavetas y fotos">
+            <div class="vehicle-editor-grid">
+              <div>
+                <label for="vehiclePhotoLeftInput">Foto lado izquierdo (URL o ruta)</label>
+                <input id="vehiclePhotoLeftInput" type="text" placeholder="assets/vehicle-gallery/truck-left.svg" />
+                <input id="vehiclePhotoLeftFile" type="file" accept="image/*" />
+              </div>
+              <div>
+                <label for="vehiclePhotoRightInput">Foto lado derecho (URL o ruta)</label>
+                <input id="vehiclePhotoRightInput" type="text" placeholder="assets/vehicle-gallery/truck-right.svg" />
+                <input id="vehiclePhotoRightFile" type="file" accept="image/*" />
+              </div>
+              <div>
+                <label for="vehiclePhotoRearInput">Foto parte trasera (URL o ruta)</label>
+                <input id="vehiclePhotoRearInput" type="text" placeholder="assets/vehicle-gallery/truck-rear.svg" />
+                <input id="vehiclePhotoRearFile" type="file" accept="image/*" />
+              </div>
+            </div>
+
+            <div class="vehicle-drawer-editor">
+              <div>
+                <label for="vehicleDrawerSelect">Gaveta a editar</label>
+                <select id="vehicleDrawerSelect" aria-label="Seleccionar gaveta para editar coordenadas"></select>
+              </div>
+              <div>
+                <label for="vehicleDrawerNameInput">Nombre de la gaveta</label>
+                <input id="vehicleDrawerNameInput" type="text" placeholder="Ej: Gaveta de rescate" />
+              </div>
+              <div>
+                <label for="vehicleDrawerItemSelect">Ítem de la gaveta</label>
+                <select id="vehicleDrawerItemSelect" aria-label="Seleccionar ítem de la gaveta"></select>
+              </div>
+              <div class="vehicle-drawer-editor-actions">
+                <button id="createVehicleDrawerBtn" class="btn btn-secondary" type="button">Crear gaveta en ángulo actual</button>
+              </div>
+              <div class="vehicle-drawer-editor-actions">
+                <button id="deleteVehicleDrawerBtn" class="btn btn-secondary" type="button">Eliminar gaveta seleccionada</button>
+              </div>
+              <div class="vehicle-drawer-editor-actions">
+                <button id="createVehicleDrawerItemBtn" class="btn btn-secondary" type="button">Agregar ítem a gaveta</button>
+              </div>
+              <div class="vehicle-drawer-editor-actions">
+                <button id="deleteVehicleDrawerItemBtn" class="btn btn-secondary" type="button">Eliminar ítem seleccionado</button>
+              </div>
+              <div>
+                <label for="vehicleDrawerXRange">Posición X (%)</label>
+                <input id="vehicleDrawerXRange" type="range" min="0" max="100" step="1" />
+              </div>
+              <div>
+                <label for="vehicleDrawerYRange">Posición Y (%)</label>
+                <input id="vehicleDrawerYRange" type="range" min="0" max="100" step="1" />
+              </div>
+              <div>
+                <label for="vehicleDrawerItemNameInput">Objeto principal</label>
+                <input id="vehicleDrawerItemNameInput" type="text" placeholder="Ej: Botiquín de trauma" />
+              </div>
+              <div>
+                <label for="vehicleDrawerItemStatusInput">Estado del objeto</label>
+                <input id="vehicleDrawerItemStatusInput" type="text" placeholder="Ej: Operativo" />
+              </div>
+              <div>
+                <label for="vehicleDrawerItemImageInput">Imagen del objeto (URL/ruta)</label>
+                <input id="vehicleDrawerItemImageInput" type="text" placeholder="logo.png" />
+              </div>
+              <div class="vehicle-drawer-editor-full">
+                <label for="vehicleDrawerItemDescriptionInput">Descripción del objeto</label>
+                <textarea id="vehicleDrawerItemDescriptionInput" rows="3" placeholder="Detalle del uso, condición o contenido principal..."></textarea>
+              </div>
+              <p id="vehicleEditorValidation" class="vehicle-editor-validation hidden"></p>
+              <p id="vehicleDrawerCoordsLabel" class="hint">Selecciona una gaveta para ajustar coordenadas.</p>
+              <p class="hint">Tip: en modo edición puedes arrastrar el hotspot o hacer clic en la foto para mover la gaveta seleccionada.</p>
+            </div>
+          </section>
+
+          <div id="vehiclePhotoStage" class="vehicle-photo-stage">
+            <img
+              id="vehiclePhotoMain"
+              src=""
+              alt="Foto del carro seleccionada"
+              loading="lazy"
+              decoding="async"
+            />
+            <div id="vehicleHotspotsLayer" class="vehicle-hotspots" aria-live="polite"></div>
+            <div id="vehiclePhotoHint" class="vehicle-photo-hint">Selecciona una gaveta para ver el inventario principal.</div>
+          </div>
+
+          <aside id="vehicleDrawerPanel" class="vehicle-drawer-panel hidden" aria-live="polite">
+            <div class="vehicle-drawer-header">
+              <div>
+                <p class="vehicle-drawer-label">Gaveta seleccionada</p>
+                <h4 id="vehicleDrawerTitle">-</h4>
+              </div>
+              <button id="closeVehicleDrawerPanelBtn" class="btn btn-secondary" type="button">Cerrar</button>
+            </div>
+            <p id="vehicleDrawerItemsCount" class="vehicle-drawer-status">Items: 0</p>
+            <label for="vehicleDrawerPanelItemSelect" class="vehicle-drawer-label">Ítem visible</label>
+            <select id="vehicleDrawerPanelItemSelect" aria-label="Seleccionar ítem visible en panel"></select>
+            <p id="vehicleDrawerStatus" class="vehicle-drawer-status">Estado: -</p>
+            <img
+              id="vehicleDrawerItemImage"
+              src=""
+              alt="Imagen del objeto en la gaveta"
+              loading="lazy"
+              decoding="async"
+            />
+            <p id="vehicleDrawerItemName" class="vehicle-drawer-item-name">-</p>
+            <p id="vehicleDrawerItemDescription" class="vehicle-drawer-description">-</p>
+          </aside>
+        </section>
 
        <form id="vehiclesForm" class="vehicles-form">
          <input type="hidden" id="vehicleId" />
 
-         <div class="grid-3">
+         <div class="grid-4">
+           <div>
+             <label for="vehicleName">Nombre del carro</label>
+             <input id="vehicleName" name="nombre" type="text" required placeholder="Ej: Carro Bomba 1" />
+           </div>
            <div>
              <label for="vehicleCode">Codigo interno</label>
              <input id="vehicleCode" name="codigo" type="text" required placeholder="Ej: M-1" />
@@ -797,6 +1010,7 @@
          <table>
            <thead>
              <tr>
+                <th>Nombre</th>
                <th>Codigo</th>
                <th>Patente</th>
                <th>Marca / Modelo</th>
@@ -825,6 +1039,7 @@
      <div class="uniforms-modal-content panel feature-layout" role="dialog" aria-modal="true" aria-labelledby="uniformsModalTitle">
        <div class="table-header">
          <h3 id="uniformsModalTitle">Inventario de Uniformes</h3>
+         <span id="uniformsModeBadge" class="module-mode-badge">Modo: filtros guardados</span>
          <button id="closeUniformsModalBtn" class="btn btn-secondary" type="button">Cerrar</button>
        </div>
 
@@ -843,6 +1058,9 @@
            <option value="Fuera de Servicio">Fuera de Servicio</option>
          </select>
          <button id="reportUniformsBtn" class="btn btn-secondary" type="button">PDF Uniformes</button>
+         <button id="saveUniformsFiltersBtn" class="btn btn-secondary" type="button">Guardar filtros</button>
+         <button id="loadUniformsFiltersBtn" class="btn btn-secondary" type="button">Cargar filtros</button>
+         <button id="resetUniformsFiltersBtn" class="btn btn-secondary" type="button">Restablecer</button>
        </div>
 
        <form id="uniformsForm" class="uniforms-form">
@@ -948,6 +1166,8 @@
       </td>
     </tr>
   </template>
+
+  <div id="toastContainer" class="toast-container-app" aria-live="polite" aria-atomic="true"></div>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
   <script src="https://unpkg.com/html5-qrcode" defer></script>

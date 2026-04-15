@@ -11,7 +11,7 @@
       "email": "",
       "phone": "",
       "createdAt": "",
-      "lastLoginAt": "2026-04-13T03:52:43.115Z",
+      "lastLoginAt": "2026-04-15T02:28:29.984Z",
       "modulePermissions": {
         "canWriteInventory": false,
         "canWriteGuardBook": false,
@@ -145,39 +145,105 @@
       "publicado": true,
       "actualizadoEn": "2026-04-13T02:11:16.903Z",
       "actualizadoPor": "Administrador"
+    },
+    {
+      "id": "ff4eb187-25f1-4f10-aa1e-a663c6652436",
+      "companyId": "company-1",
+      "fecha": "2026-04-15",
+      "tipo": "Disposicion",
+      "titulo": "se lo voy a meter a javier",
+      "contenido": "javier grito mucho",
+      "firmadoPor": "carlito el moreno",
+      "publicado": true,
+      "actualizadoEn": "2026-04-15T04:17:13.032Z",
+      "actualizadoPor": "Administrador"
+    }
+  ],
+  "dayOrderPdfs": [
+    {
+      "id": "70fd7130-0b66-4e5c-904c-e6f8390a443c",
+      "companyId": "company-1",
+      "titulo": "CitaciÃ³n n006pdf",
+      "originalName": "CitaciÃ³n n006pdf.pdf",
+      "fileName": "1776220135097-34558-Citaci-n-n006pdf.pdf",
+      "fileUrl": "/uploads/day-orders/company-1/1776220135097-34558-Citaci-n-n006pdf.pdf",
+      "uploadedAt": "2026-04-15T02:28:55.124Z",
+      "uploadedBy": "Administrador"
     }
   ],
   "vehicles": [
     {
-      "id": "ff2d3f8f-e1f8-4937-8dee-4571ec0e98b4",
+      "id": "02edb530-5e1e-489d-bf30-c75170ed5b8c",
       "companyId": "company-1",
-      "codigo": "M-2",
-      "patente": "AC456EF",
-      "marcaModelo": "Mercedes Atego 1726",
-      "anio": 2020,
-      "kilometraje": 45210,
-      "estadoOperativo": "Disponible",
-      "ultimaMantencion": "2026-03-20",
-      "proximaMantencionKm": 50000,
-      "revisionTecnicaVencimiento": "2026-11-30",
-      "observaciones": "Unidad de apoyo operativo",
-      "actualizadoEn": "2026-04-13T02:44:06.962Z",
-      "actualizadoPor": "Administrador"
-    },
-    {
-      "id": "1489fffe-9612-43b8-84a2-f081bc9f3805",
-      "companyId": "company-1",
-      "codigo": "M-ALERT",
-      "patente": "ZZ999ZZ",
-      "marcaModelo": "Test Alert",
-      "anio": 2019,
-      "kilometraje": 99800,
-      "estadoOperativo": "Fuera de Servicio",
-      "ultimaMantencion": "2026-01-10",
-      "proximaMantencionKm": 99000,
-      "revisionTecnicaVencimiento": "2026-04-10",
-      "observaciones": "Prueba alertas",
-      "actualizadoEn": "2026-04-13T02:46:27.988Z",
+      "codigo": "12",
+      "patente": "12",
+      "marcaModelo": "B4",
+      "anio": 2015,
+      "kilometraje": 12,
+      "estadoOperativo": "En Servicio",
+      "ultimaMantencion": "2026-04-14",
+      "proximaMantencionKm": 0,
+      "revisionTecnicaVencimiento": "",
+      "observaciones": "",
+      "photoGallery": [
+        {
+          "angle": "left",
+          "label": "Lado izquierdo",
+          "image": "assets/vehicle-gallery/truck-left.svg"
+        },
+        {
+          "angle": "right",
+          "label": "Lado derecho",
+          "image": "assets/vehicle-gallery/truck-right.svg"
+        },
+        {
+          "angle": "rear",
+          "label": "Parte trasera",
+          "image": "assets/vehicle-gallery/truck-rear.svg"
+        }
+      ],
+      "drawerInventory": [
+        {
+          "id": "12-G01",
+          "nombre": "Gaveta herramientas rapidas",
+          "angle": "left",
+          "x": 27,
+          "y": 58,
+          "item": {
+            "nombre": "Kit de herramientas rapidas",
+            "estado": "Operativo",
+            "imagen": "logo.png",
+            "descripcion": "Incluye llaves, alicates y elementos de ajuste para intervenciones cortas."
+          }
+        },
+        {
+          "id": "12-G02",
+          "nombre": "Gaveta material absorbente",
+          "angle": "right",
+          "x": 68,
+          "y": 61,
+          "item": {
+            "nombre": "Absorbente industrial",
+            "estado": "Operativo",
+            "imagen": "logo.png",
+            "descripcion": "Sacos absorbentes para control de derrames y contención inicial."
+          }
+        },
+        {
+          "id": "12-G03",
+          "nombre": "Gaveta señalizacion trasera",
+          "angle": "rear",
+          "x": 52,
+          "y": 66,
+          "item": {
+            "nombre": "Conos y balizas",
+            "estado": "Operativo",
+            "imagen": "logo.png",
+            "descripcion": "Conjunto de conos reflectantes y balizas para asegurar el perímetro."
+          }
+        }
+      ],
+      "actualizadoEn": "2026-04-15T02:26:27.795Z",
       "actualizadoPor": "Administrador"
     }
   ],

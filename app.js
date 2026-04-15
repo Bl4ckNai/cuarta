@@ -18,7 +18,6 @@ const menuOpenDayOrders = document.getElementById("menuOpenDayOrders");
 const menuOpenVehicles = document.getElementById("menuOpenVehicles");
 const menuOpenUniforms = document.getElementById("menuOpenUniforms");
 const menuOpenReports = document.getElementById("menuOpenReports");
-const menuOpenUsers = document.getElementById("menuOpenUsers");
 const manageUsersBtn = document.getElementById("manageUsersBtnDropdown");
 const logoutBtn = document.getElementById("logoutBtnDropdown");
 const themeToggleBtn = document.getElementById("themeToggleBtnDropdown");
@@ -58,10 +57,20 @@ const filterEstado = document.getElementById("filterEstado");
 const exportCsvBtn = document.getElementById("exportCsvBtn");
 const reportInventoryBtn = document.getElementById("reportInventoryBtn");
 const reportExpiringBtn = document.getElementById("reportExpiringBtn");
+const saveInventoryFiltersBtn = document.getElementById("saveInventoryFiltersBtn");
+const loadInventoryFiltersBtn = document.getElementById("loadInventoryFiltersBtn");
+const resetInventoryFiltersBtn = document.getElementById("resetInventoryFiltersBtn");
 const reportUniformsBtn = document.getElementById("reportUniformsBtn");
 const quickScanQrBtn = document.getElementById("quickScanQrBtn");
 const quickNewRecordBtn = document.getElementById("quickNewRecordBtn");
 const quickReportBtn = document.getElementById("quickReportBtn");
+const autoApplySavedFiltersBtn = document.getElementById("autoApplySavedFiltersBtn");
+const clearAllSavedFiltersBtn = document.getElementById("clearAllSavedFiltersBtn");
+const savedFiltersModeHint = document.getElementById("savedFiltersModeHint");
+const lastModuleLabel = document.getElementById("lastModuleLabel");
+const reopenLastModuleBtn = document.getElementById("reopenLastModuleBtn");
+const quickGlobalSearchInput = document.getElementById("quickGlobalSearchInput");
+const quickGlobalSearchBtn = document.getElementById("quickGlobalSearchBtn");
 const cancelEditBtn = document.getElementById("cancelEditBtn");
 const rowTemplate = document.getElementById("rowTemplate");
 const userForm = document.getElementById("userForm");
@@ -101,6 +110,13 @@ const dayOrdersFilterTipo = document.getElementById("dayOrdersFilterTipo");
 const dayOrdersTableBody = document.getElementById("dayOrdersTableBody");
 const dayOrdersEmptyState = document.getElementById("dayOrdersEmptyState");
 const dayOrderCancelEditBtn = document.getElementById("dayOrderCancelEditBtn");
+const dayOrderPdfTitle = document.getElementById("dayOrderPdfTitle");
+const dayOrderPdfFile = document.getElementById("dayOrderPdfFile");
+const uploadDayOrderPdfBtn = document.getElementById("uploadDayOrderPdfBtn");
+const dayOrderPdfUploadStatus = document.getElementById("dayOrderPdfUploadStatus");
+const latestDayOrderPdfFrame = document.getElementById("latestDayOrderPdfFrame");
+const latestDayOrderPdfMeta = document.getElementById("latestDayOrderPdfMeta");
+const latestDayOrderPdfLink = document.getElementById("latestDayOrderPdfLink");
 const vehiclesForm = document.getElementById("vehiclesForm");
 const vehicleId = document.getElementById("vehicleId");
 const vehiclesTableBody = document.getElementById("vehiclesTableBody");
@@ -108,6 +124,48 @@ const vehiclesSearchInput = document.getElementById("vehiclesSearchInput");
 const vehiclesFilterStatus = document.getElementById("vehiclesFilterStatus");
 const vehiclesEmptyState = document.getElementById("vehiclesEmptyState");
 const vehicleCancelEditBtn = document.getElementById("vehicleCancelEditBtn");
+const vehiclesViewerVehicle = document.getElementById("vehiclesViewerVehicle");
+const vehicleViewerAngles = document.getElementById("vehicleViewerAngles");
+const vehiclePhotoStage = document.getElementById("vehiclePhotoStage");
+const vehiclePhotoMain = document.getElementById("vehiclePhotoMain");
+const vehicleHotspotsLayer = document.getElementById("vehicleHotspotsLayer");
+const vehiclePhotoHint = document.getElementById("vehiclePhotoHint");
+const toggleVehicleEditorBtn = document.getElementById("toggleVehicleEditorBtn");
+const saveVehicleViewerChangesBtn = document.getElementById("saveVehicleViewerChangesBtn");
+const createVehicleQuickBtn = document.getElementById("createVehicleQuickBtn");
+const deleteVehicleQuickBtn = document.getElementById("deleteVehicleQuickBtn");
+const vehicleEditorPanel = document.getElementById("vehicleEditorPanel");
+const vehiclePhotoLeftInput = document.getElementById("vehiclePhotoLeftInput");
+const vehiclePhotoRightInput = document.getElementById("vehiclePhotoRightInput");
+const vehiclePhotoRearInput = document.getElementById("vehiclePhotoRearInput");
+const vehiclePhotoLeftFile = document.getElementById("vehiclePhotoLeftFile");
+const vehiclePhotoRightFile = document.getElementById("vehiclePhotoRightFile");
+const vehiclePhotoRearFile = document.getElementById("vehiclePhotoRearFile");
+const vehicleDrawerSelect = document.getElementById("vehicleDrawerSelect");
+const vehicleDrawerNameInput = document.getElementById("vehicleDrawerNameInput");
+const vehicleDrawerItemSelect = document.getElementById("vehicleDrawerItemSelect");
+const createVehicleDrawerBtn = document.getElementById("createVehicleDrawerBtn");
+const deleteVehicleDrawerBtn = document.getElementById("deleteVehicleDrawerBtn");
+const createVehicleDrawerItemBtn = document.getElementById("createVehicleDrawerItemBtn");
+const deleteVehicleDrawerItemBtn = document.getElementById("deleteVehicleDrawerItemBtn");
+const vehicleDrawerXRange = document.getElementById("vehicleDrawerXRange");
+const vehicleDrawerYRange = document.getElementById("vehicleDrawerYRange");
+const vehicleDrawerItemNameInput = document.getElementById("vehicleDrawerItemNameInput");
+const vehicleDrawerItemStatusInput = document.getElementById("vehicleDrawerItemStatusInput");
+const vehicleDrawerItemImageInput = document.getElementById("vehicleDrawerItemImageInput");
+const vehicleDrawerItemDescriptionInput = document.getElementById("vehicleDrawerItemDescriptionInput");
+const vehicleDrawerCoordsLabel = document.getElementById("vehicleDrawerCoordsLabel");
+const vehicleMediaStatus = document.getElementById("vehicleMediaStatus");
+const vehicleEditorValidation = document.getElementById("vehicleEditorValidation");
+const vehicleDrawerPanel = document.getElementById("vehicleDrawerPanel");
+const closeVehicleDrawerPanelBtn = document.getElementById("closeVehicleDrawerPanelBtn");
+const vehicleDrawerItemsCount = document.getElementById("vehicleDrawerItemsCount");
+const vehicleDrawerPanelItemSelect = document.getElementById("vehicleDrawerPanelItemSelect");
+const vehicleDrawerTitle = document.getElementById("vehicleDrawerTitle");
+const vehicleDrawerStatus = document.getElementById("vehicleDrawerStatus");
+const vehicleDrawerItemImage = document.getElementById("vehicleDrawerItemImage");
+const vehicleDrawerItemName = document.getElementById("vehicleDrawerItemName");
+const vehicleDrawerItemDescription = document.getElementById("vehicleDrawerItemDescription");
 const uniformsForm = document.getElementById("uniformsForm");
 const uniformRecordId = document.getElementById("uniformRecordId");
 const uniformsTableBody = document.getElementById("uniformsTableBody");
@@ -116,13 +174,43 @@ const uniformsFilterMovement = document.getElementById("uniformsFilterMovement")
 const uniformsFilterStatus = document.getElementById("uniformsFilterStatus");
 const uniformsEmptyState = document.getElementById("uniformsEmptyState");
 const uniformCancelEditBtn = document.getElementById("uniformCancelEditBtn");
+const inventoryModeBadge = document.getElementById("inventoryModeBadge");
+const guardModeBadge = document.getElementById("guardModeBadge");
+const medicalModeBadge = document.getElementById("medicalModeBadge");
+const coursesModeBadge = document.getElementById("coursesModeBadge");
+const dayOrdersModeBadge = document.getElementById("dayOrdersModeBadge");
+const vehiclesModeBadge = document.getElementById("vehiclesModeBadge");
+const uniformsModeBadge = document.getElementById("uniformsModeBadge");
+const saveGuardFiltersBtn = document.getElementById("saveGuardFiltersBtn");
+const loadGuardFiltersBtn = document.getElementById("loadGuardFiltersBtn");
+const resetGuardFiltersBtn = document.getElementById("resetGuardFiltersBtn");
+const saveMedicalFiltersBtn = document.getElementById("saveMedicalFiltersBtn");
+const loadMedicalFiltersBtn = document.getElementById("loadMedicalFiltersBtn");
+const resetMedicalFiltersBtn = document.getElementById("resetMedicalFiltersBtn");
+const saveCoursesFiltersBtn = document.getElementById("saveCoursesFiltersBtn");
+const loadCoursesFiltersBtn = document.getElementById("loadCoursesFiltersBtn");
+const resetCoursesFiltersBtn = document.getElementById("resetCoursesFiltersBtn");
+const saveDayOrdersFiltersBtn = document.getElementById("saveDayOrdersFiltersBtn");
+const loadDayOrdersFiltersBtn = document.getElementById("loadDayOrdersFiltersBtn");
+const resetDayOrdersFiltersBtn = document.getElementById("resetDayOrdersFiltersBtn");
+const saveVehiclesFiltersBtn = document.getElementById("saveVehiclesFiltersBtn");
+const loadVehiclesFiltersBtn = document.getElementById("loadVehiclesFiltersBtn");
+const resetVehiclesFiltersBtn = document.getElementById("resetVehiclesFiltersBtn");
+const saveUniformsFiltersBtn = document.getElementById("saveUniformsFiltersBtn");
+const loadUniformsFiltersBtn = document.getElementById("loadUniformsFiltersBtn");
+const resetUniformsFiltersBtn = document.getElementById("resetUniformsFiltersBtn");
 
 const totalItemsEl = document.getElementById("totalItems");
 const lowStockCountEl = document.getElementById("lowStockCount");
 const inServiceCountEl = document.getElementById("inServiceCount");
 const expiringCountEl = document.getElementById("expiringCount");
+const homeVehiclesUnavailableCountEl = document.getElementById("homeVehiclesUnavailableCount");
+const homeUniformCriticalCountEl = document.getElementById("homeUniformCriticalCount");
 const homeAlertsList = document.getElementById("homeAlertsList");
 const recentChangesList = document.getElementById("recentChangesList");
+const toastContainerEl = document.getElementById("toastContainer");
+
+const nativeAlert = window.alert.bind(window);
 
 const menuNavLinks = [
   menuOpenInventory,
@@ -132,8 +220,51 @@ const menuNavLinks = [
   menuOpenDayOrders,
   menuOpenVehicles,
   menuOpenUniforms,
-  menuOpenReports,
-  menuOpenUsers
+  menuOpenReports
+];
+
+const moduleNavLinks = [
+  menuOpenInventory,
+  menuOpenGuard,
+  menuOpenMedical,
+  menuOpenCourses,
+  menuOpenDayOrders,
+  menuOpenVehicles,
+  menuOpenUniforms
+];
+
+const adminOnlyModeElements = [
+  autoApplySavedFiltersBtn,
+  clearAllSavedFiltersBtn,
+  savedFiltersModeHint,
+  inventoryModeBadge,
+  guardModeBadge,
+  medicalModeBadge,
+  coursesModeBadge,
+  dayOrdersModeBadge,
+  vehiclesModeBadge,
+  uniformsModeBadge,
+  saveInventoryFiltersBtn,
+  loadInventoryFiltersBtn,
+  resetInventoryFiltersBtn,
+  saveGuardFiltersBtn,
+  loadGuardFiltersBtn,
+  resetGuardFiltersBtn,
+  saveMedicalFiltersBtn,
+  loadMedicalFiltersBtn,
+  resetMedicalFiltersBtn,
+  saveCoursesFiltersBtn,
+  loadCoursesFiltersBtn,
+  resetCoursesFiltersBtn,
+  saveDayOrdersFiltersBtn,
+  loadDayOrdersFiltersBtn,
+  resetDayOrdersFiltersBtn,
+  saveVehiclesFiltersBtn,
+  loadVehiclesFiltersBtn,
+  resetVehiclesFiltersBtn,
+  saveUniformsFiltersBtn,
+  loadUniformsFiltersBtn,
+  resetUniformsFiltersBtn
 ];
 
 const statusClassMap = {
@@ -150,11 +281,13 @@ let guardEntries = [];
 let medicalRecords = [];
 let volunteerCourses = [];
 let dayOrders = [];
+let dayOrderPdfs = [];
 let vehicles = [];
 let uniforms = [];
 let qrScanner = null;
 let qrScannerActive = false;
 let qrLastDecoded = "";
+let lastModuleState = "";
 let editingPermissionsUserId = "";
 let permissions = {
   canWriteInventory: false,
@@ -166,6 +299,44 @@ let permissions = {
   canWriteUniforms: false,
   canManageUsers: false,
   canGenerateReports: true
+};
+
+const FALLBACK_VEHICLE_PHOTO_BY_ANGLE = {
+  left: "assets/vehicle-gallery/truck-left.svg",
+  right: "assets/vehicle-gallery/truck-right.svg",
+  rear: "assets/vehicle-gallery/truck-rear.svg"
+};
+
+const vehicleViewerState = {
+  vehicleId: "",
+  angle: "left",
+  activeDrawerId: "",
+  activeDrawerItemIndex: 0,
+  editMode: false,
+  dirtyMedia: false,
+  isSavingMedia: false,
+  draggingDrawerId: "",
+  dragActive: false
+};
+
+const moduleOpenByKey = {
+  inventory: openInventoryModule,
+  guard: openGuardModal,
+  medical: openMedicalModal,
+  courses: openCoursesModal,
+  dayorders: openDayOrdersModal,
+  vehicles: openVehiclesModal,
+  uniforms: openUniformsModal
+};
+
+const moduleLabelByKey = {
+  inventory: "Inventario",
+  guard: "Libro de Guardia",
+  medical: "Fichas Medicas",
+  courses: "Cursos",
+  dayorders: "Ordenes del Dia",
+  vehicles: "Carros",
+  uniforms: "Inventario de Uniformes"
 };
 
 // Funciones de tema (oscuro/claro)
@@ -205,10 +376,99 @@ filterEstado.addEventListener("change", render);
 exportCsvBtn.addEventListener("click", exportToCsv);
 reportInventoryBtn.addEventListener("click", () => downloadPdfReport("/api/reports/inventory.pdf", "inventario"));
 reportExpiringBtn.addEventListener("click", () => downloadPdfReport("/api/reports/expiring.pdf", "vencimientos"));
+if (saveInventoryFiltersBtn) {
+  saveInventoryFiltersBtn.addEventListener("click", saveInventoryFiltersPreset);
+}
+if (loadInventoryFiltersBtn) {
+  loadInventoryFiltersBtn.addEventListener("click", () => {
+    loadInventoryFiltersPreset({ notifyIfMissing: true });
+  });
+}
+if (resetInventoryFiltersBtn) {
+  resetInventoryFiltersBtn.addEventListener("click", () => resetInventoryFilters({ notify: true }));
+}
+if (saveGuardFiltersBtn) {
+  saveGuardFiltersBtn.addEventListener("click", saveGuardFiltersPreset);
+}
+if (loadGuardFiltersBtn) {
+  loadGuardFiltersBtn.addEventListener("click", () => loadGuardFiltersPreset({ notifyIfMissing: true }));
+}
+if (resetGuardFiltersBtn) {
+  resetGuardFiltersBtn.addEventListener("click", () => resetGuardFilters({ notify: true }));
+}
+if (saveMedicalFiltersBtn) {
+  saveMedicalFiltersBtn.addEventListener("click", saveMedicalFiltersPreset);
+}
+if (loadMedicalFiltersBtn) {
+  loadMedicalFiltersBtn.addEventListener("click", () => loadMedicalFiltersPreset({ notifyIfMissing: true }));
+}
+if (resetMedicalFiltersBtn) {
+  resetMedicalFiltersBtn.addEventListener("click", () => resetMedicalFilters({ notify: true }));
+}
+if (saveCoursesFiltersBtn) {
+  saveCoursesFiltersBtn.addEventListener("click", saveCoursesFiltersPreset);
+}
+if (loadCoursesFiltersBtn) {
+  loadCoursesFiltersBtn.addEventListener("click", () => loadCoursesFiltersPreset({ notifyIfMissing: true }));
+}
+if (resetCoursesFiltersBtn) {
+  resetCoursesFiltersBtn.addEventListener("click", () => resetCoursesFilters({ notify: true }));
+}
+if (saveDayOrdersFiltersBtn) {
+  saveDayOrdersFiltersBtn.addEventListener("click", saveDayOrdersFiltersPreset);
+}
+if (loadDayOrdersFiltersBtn) {
+  loadDayOrdersFiltersBtn.addEventListener("click", () => loadDayOrdersFiltersPreset({ notifyIfMissing: true }));
+}
+if (resetDayOrdersFiltersBtn) {
+  resetDayOrdersFiltersBtn.addEventListener("click", () => resetDayOrdersFilters({ notify: true }));
+}
+if (saveVehiclesFiltersBtn) {
+  saveVehiclesFiltersBtn.addEventListener("click", saveVehiclesFiltersPreset);
+}
+if (loadVehiclesFiltersBtn) {
+  loadVehiclesFiltersBtn.addEventListener("click", () => loadVehiclesFiltersPreset({ notifyIfMissing: true }));
+}
+if (resetVehiclesFiltersBtn) {
+  resetVehiclesFiltersBtn.addEventListener("click", () => resetVehiclesFilters({ notify: true }));
+}
+if (saveUniformsFiltersBtn) {
+  saveUniformsFiltersBtn.addEventListener("click", saveUniformsFiltersPreset);
+}
+if (loadUniformsFiltersBtn) {
+  loadUniformsFiltersBtn.addEventListener("click", () => loadUniformsFiltersPreset({ notifyIfMissing: true }));
+}
+if (resetUniformsFiltersBtn) {
+  resetUniformsFiltersBtn.addEventListener("click", () => resetUniformsFilters({ notify: true }));
+}
 reportUniformsBtn.addEventListener("click", () => downloadPdfReport("/api/reports/uniforms.pdf", "uniformes"));
 quickScanQrBtn.addEventListener("click", onQuickScanQr);
 quickNewRecordBtn.addEventListener("click", onQuickNewRecord);
 quickReportBtn.addEventListener("click", onQuickReport);
+if (autoApplySavedFiltersBtn) {
+  autoApplySavedFiltersBtn.addEventListener("click", toggleAutoApplySavedFilters);
+}
+if (clearAllSavedFiltersBtn) {
+  clearAllSavedFiltersBtn.addEventListener("click", clearAllSavedFilters);
+}
+if (quickGlobalSearchBtn) {
+  quickGlobalSearchBtn.addEventListener("click", () => {
+    void onQuickGlobalSearch();
+  });
+}
+if (reopenLastModuleBtn) {
+  reopenLastModuleBtn.addEventListener("click", () => {
+    void reopenLastModule();
+  });
+}
+if (quickGlobalSearchInput) {
+  quickGlobalSearchInput.addEventListener("keydown", (event) => {
+    if (event.key === "Enter") {
+      event.preventDefault();
+      void onQuickGlobalSearch();
+    }
+  });
+}
 cancelEditBtn.addEventListener("click", resetForm);
 manageUsersBtn.addEventListener("click", openUsersModal);
 closeUsersModalBtn.addEventListener("click", () => closeUsersModal({ returnHome: true }));
@@ -247,13 +507,44 @@ applyQrManualBtn.addEventListener("click", onManualQrSearch);
 dayOrdersSearchInput.addEventListener("input", renderDayOrders);
 dayOrdersFilterTipo.addEventListener("change", renderDayOrders);
 dayOrderCancelEditBtn.addEventListener("click", resetDayOrderForm);
+uploadDayOrderPdfBtn.addEventListener("click", onUploadDayOrderPdf);
 vehiclesSearchInput.addEventListener("input", renderVehicles);
 vehiclesFilterStatus.addEventListener("change", renderVehicles);
 vehicleCancelEditBtn.addEventListener("click", resetVehicleForm);
+vehiclesViewerVehicle.addEventListener("change", onVehicleViewerVehicleChange);
+closeVehicleDrawerPanelBtn.addEventListener("click", closeVehicleDrawerPanel);
+toggleVehicleEditorBtn.addEventListener("click", toggleVehicleEditorMode);
+saveVehicleViewerChangesBtn.addEventListener("click", saveVehicleViewerChanges);
+createVehicleQuickBtn.addEventListener("click", createVehicleQuick);
+deleteVehicleQuickBtn.addEventListener("click", deleteSelectedVehicleQuick);
+vehiclePhotoStage.addEventListener("click", onVehiclePhotoStageClick);
+vehicleDrawerSelect.addEventListener("change", onDrawerEditorSelectionChange);
+vehicleDrawerNameInput.addEventListener("input", onDrawerNameInputChange);
+vehicleDrawerItemSelect.addEventListener("change", onDrawerItemSelectionChange);
+createVehicleDrawerBtn.addEventListener("click", onCreateVehicleDrawerClick);
+deleteVehicleDrawerBtn.addEventListener("click", onDeleteVehicleDrawerClick);
+createVehicleDrawerItemBtn.addEventListener("click", onCreateVehicleDrawerItemClick);
+deleteVehicleDrawerItemBtn.addEventListener("click", onDeleteVehicleDrawerItemClick);
+vehicleDrawerXRange.addEventListener("input", onDrawerCoordinateRangeInput);
+vehicleDrawerYRange.addEventListener("input", onDrawerCoordinateRangeInput);
+vehicleDrawerItemNameInput.addEventListener("input", onDrawerItemInputChange);
+vehicleDrawerItemStatusInput.addEventListener("input", onDrawerItemInputChange);
+vehicleDrawerItemImageInput.addEventListener("input", onDrawerItemInputChange);
+vehicleDrawerItemDescriptionInput.addEventListener("input", onDrawerItemInputChange);
+vehiclePhotoLeftInput.addEventListener("input", () => onPhotoInputChange("left", vehiclePhotoLeftInput.value));
+vehiclePhotoRightInput.addEventListener("input", () => onPhotoInputChange("right", vehiclePhotoRightInput.value));
+vehiclePhotoRearInput.addEventListener("input", () => onPhotoInputChange("rear", vehiclePhotoRearInput.value));
+vehiclePhotoLeftFile.addEventListener("change", () => onPhotoFileChange("left", vehiclePhotoLeftFile));
+vehiclePhotoRightFile.addEventListener("change", () => onPhotoFileChange("right", vehiclePhotoRightFile));
+vehiclePhotoRearFile.addEventListener("change", () => onPhotoFileChange("rear", vehiclePhotoRearFile));
+vehicleDrawerPanelItemSelect.addEventListener("change", onDrawerPanelItemSelectionChange);
+window.addEventListener("pointermove", onVehicleHotspotPointerMove);
+window.addEventListener("pointerup", onVehicleHotspotPointerUp);
 uniformsSearchInput.addEventListener("input", renderUniforms);
 uniformsFilterMovement.addEventListener("change", renderUniforms);
 uniformsFilterStatus.addEventListener("change", renderUniforms);
 uniformCancelEditBtn.addEventListener("click", resetUniformForm);
+window.addEventListener("keydown", onGlobalShortcutKeyDown);
 menuHomeBtn.addEventListener("click", (event) => {
   event.preventDefault();
   openHomeModule();
@@ -294,10 +585,6 @@ menuOpenReports.addEventListener("click", (event) => {
   setActiveNav(menuOpenReports);
   reportInventoryBtn.click();
 });
-menuOpenUsers.addEventListener("click", async (event) => {
-  event.preventDefault();
-  await openUsersModal();
-});
 setDefaultGuardDate();
 resetDayOrderForm();
 resetUniformForm();
@@ -320,6 +607,7 @@ async function bootstrap() {
     await refreshMedicalRecords();
     await refreshCourses();
     await refreshDayOrders();
+    await refreshDayOrderPdfs();
     await refreshVehicles();
     await refreshUniforms();
     showAppScreen();
@@ -364,6 +652,7 @@ async function onLogin(event) {
     await refreshMedicalRecords();
     await refreshCourses();
     await refreshDayOrders();
+    await refreshDayOrderPdfs();
     await refreshVehicles();
     await refreshUniforms();
     showAppScreen();
@@ -389,8 +678,16 @@ async function onLogout() {
   medicalRecords = [];
   volunteerCourses = [];
   dayOrders = [];
+  dayOrderPdfs = [];
   vehicles = [];
   uniforms = [];
+  vehicleViewerState.vehicleId = "";
+  vehicleViewerState.angle = "left";
+  vehicleViewerState.activeDrawerId = "";
+  vehicleViewerState.activeDrawerItemIndex = 0;
+  vehicleViewerState.editMode = false;
+  vehicleViewerState.dirtyMedia = false;
+  vehicleViewerState.isSavingMedia = false;
   permissions = {
     canWriteInventory: false,
     canWriteGuardBook: false,
@@ -416,6 +713,7 @@ async function onLogout() {
   closeDayOrdersModal();
   closeVehiclesModal();
   closeUniformsModal();
+  renderLatestDayOrderPdf();
   showAuthScreen();
 }
 
@@ -454,6 +752,12 @@ async function refreshDayOrders() {
   updateHomeSummary();
 }
 
+async function refreshDayOrderPdfs() {
+  const response = await api("/api/day-orders/pdfs");
+  dayOrderPdfs = response.pdfs || [];
+  renderLatestDayOrderPdf();
+}
+
 async function refreshVehicles() {
   const response = await api("/api/vehicles");
   vehicles = response.vehicles || [];
@@ -469,8 +773,47 @@ async function refreshUniforms() {
 }
 
 function updateHomeSummary() {
+  updateHomeOperationalKpis();
   updateHomeAlerts();
   updateRecentChanges();
+  renderLatestDayOrderPdf();
+}
+
+function updateHomeOperationalKpis() {
+  if (homeVehiclesUnavailableCountEl) {
+    const unavailableVehicles = vehicles.filter((vehicle) => String(vehicle.estadoOperativo || "") !== "Disponible").length;
+    homeVehiclesUnavailableCountEl.textContent = String(unavailableVehicles);
+  }
+
+  if (homeUniformCriticalCountEl) {
+    const criticalUniforms = uniforms.filter((record) => getUniformAlertData(record).className === "alert-high").length;
+    homeUniformCriticalCountEl.textContent = String(criticalUniforms);
+  }
+}
+
+function renderLatestDayOrderPdf() {
+  if (!latestDayOrderPdfMeta || !latestDayOrderPdfFrame || !latestDayOrderPdfLink) {
+    return;
+  }
+
+  if (!Array.isArray(dayOrderPdfs) || dayOrderPdfs.length === 0) {
+    latestDayOrderPdfMeta.textContent = "No hay PDF cargado todavía.";
+    latestDayOrderPdfFrame.src = "";
+    latestDayOrderPdfFrame.hidden = true;
+    latestDayOrderPdfLink.hidden = true;
+    latestDayOrderPdfLink.href = "#";
+    return;
+  }
+
+  const latest = dayOrderPdfs[0];
+  const pdfUrl = String(latest.fileUrl || "").trim();
+  const uploadedBy = String(latest.uploadedBy || "-").trim();
+  const uploadedAt = formatDateTime(latest.uploadedAt);
+  latestDayOrderPdfMeta.textContent = `${latest.titulo || latest.originalName} · Subido por ${uploadedBy} (${uploadedAt})`;
+  latestDayOrderPdfFrame.src = pdfUrl;
+  latestDayOrderPdfFrame.hidden = false;
+  latestDayOrderPdfLink.href = pdfUrl;
+  latestDayOrderPdfLink.hidden = false;
 }
 
 function updateHomeAlerts() {
@@ -715,6 +1058,549 @@ function getFilteredInventory() {
   });
 }
 
+function getInventoryFiltersStorageKey() {
+  const userPart = String(currentUser?.id || currentUser?.username || "anon").trim();
+  const companyPart = String(currentUser?.companyId || "global").trim();
+  return `inventory_filters::${companyPart}::${userPart}`;
+}
+
+function getModuleFiltersStorageKey(moduleKey) {
+  const userPart = String(currentUser?.id || currentUser?.username || "anon").trim();
+  const companyPart = String(currentUser?.companyId || "global").trim();
+  return `module_filters::${moduleKey}::${companyPart}::${userPart}`;
+}
+
+function getFiltersAutoloadStorageKey() {
+  const userPart = String(currentUser?.id || currentUser?.username || "anon").trim();
+  const companyPart = String(currentUser?.companyId || "global").trim();
+  return `filters_autoload::${companyPart}::${userPart}`;
+}
+
+function getLastModuleStorageKey() {
+  const userPart = String(currentUser?.id || currentUser?.username || "anon").trim();
+  const companyPart = String(currentUser?.companyId || "global").trim();
+  return `last_module::${companyPart}::${userPart}`;
+}
+
+function setLastModule(moduleKey) {
+  if (!moduleOpenByKey[moduleKey]) {
+    return;
+  }
+
+  lastModuleState = moduleKey;
+  if (currentUser) {
+    localStorage.setItem(getLastModuleStorageKey(), moduleKey);
+  }
+  updateLastModuleUi();
+}
+
+function loadLastModuleFromStorage() {
+  if (!currentUser) {
+    lastModuleState = "";
+    updateLastModuleUi();
+    return;
+  }
+
+  const moduleKey = String(localStorage.getItem(getLastModuleStorageKey()) || "").trim();
+  lastModuleState = moduleOpenByKey[moduleKey] ? moduleKey : "";
+  updateLastModuleUi();
+}
+
+function updateLastModuleUi() {
+  if (!lastModuleLabel || !reopenLastModuleBtn) {
+    return;
+  }
+
+  const moduleLabel = moduleLabelByKey[lastModuleState];
+  if (!moduleLabel) {
+    lastModuleLabel.textContent = "Aun no abriste ningun modulo.";
+    reopenLastModuleBtn.hidden = true;
+    return;
+  }
+
+  lastModuleLabel.textContent = moduleLabel;
+  reopenLastModuleBtn.hidden = false;
+}
+
+async function reopenLastModule() {
+  if (!lastModuleState || !moduleOpenByKey[lastModuleState]) {
+    showToast("Aun no hay un modulo reciente para reabrir.", "info");
+    return;
+  }
+
+  await moduleOpenByKey[lastModuleState]();
+}
+
+function isCurrentUserAdmin() {
+  const role = String(currentUser?.role || "").trim().toLowerCase();
+  return role === "admin" || Boolean(permissions.canManageUsers);
+}
+
+function isAutoApplySavedFiltersEnabled() {
+  if (!isCurrentUserAdmin()) {
+    return true;
+  }
+
+  const value = localStorage.getItem(getFiltersAutoloadStorageKey());
+  if (value === null) {
+    return true;
+  }
+  return value === "1";
+}
+
+function setAutoApplySavedFiltersEnabled(enabled) {
+  if (!isCurrentUserAdmin()) {
+    return;
+  }
+
+  localStorage.setItem(getFiltersAutoloadStorageKey(), enabled ? "1" : "0");
+  updateAutoApplySavedFiltersButton();
+}
+
+function updateAutoApplySavedFiltersButton() {
+  const adminUser = isCurrentUserAdmin();
+  const enabled = isAutoApplySavedFiltersEnabled();
+
+  adminOnlyModeElements.forEach((element) => {
+    if (element) {
+      element.classList.toggle("hidden", !adminUser);
+    }
+  });
+
+  if (!adminUser) {
+    moduleNavLinks.forEach((link) => {
+      if (link) {
+        link.classList.remove("is-auto-filters-on", "is-auto-filters-off");
+      }
+    });
+    return;
+  }
+
+  if (!autoApplySavedFiltersBtn) {
+    return;
+  }
+
+  autoApplySavedFiltersBtn.textContent = enabled ? "Auto filtros: ON" : "Auto filtros: OFF";
+  autoApplySavedFiltersBtn.classList.toggle("btn-primary", enabled);
+  autoApplySavedFiltersBtn.classList.toggle("btn-secondary", !enabled);
+  autoApplySavedFiltersBtn.classList.toggle("is-auto-filters-on", enabled);
+  autoApplySavedFiltersBtn.classList.toggle("is-auto-filters-off", !enabled);
+  updateSavedFiltersModeIndicators();
+}
+
+function getSavedFiltersModeText() {
+  return isAutoApplySavedFiltersEnabled() ? "Modo: filtros guardados" : "Modo: limpio";
+}
+
+function updateSavedFiltersModeIndicators() {
+  const modeText = getSavedFiltersModeText();
+  const hintText = isAutoApplySavedFiltersEnabled()
+    ? "Los módulos abrirán con filtros guardados mientras el auto filtro esté activo."
+    : "Los módulos abrirán con filtros predeterminados hasta que vuelvas a activar el auto filtro.";
+  const modeEnabled = isAutoApplySavedFiltersEnabled();
+
+  if (savedFiltersModeHint) {
+    savedFiltersModeHint.textContent = hintText;
+    savedFiltersModeHint.classList.toggle("is-auto-filters-on", modeEnabled);
+    savedFiltersModeHint.classList.toggle("is-auto-filters-off", !modeEnabled);
+  }
+
+  [
+    inventoryModeBadge,
+    guardModeBadge,
+    medicalModeBadge,
+    coursesModeBadge,
+    dayOrdersModeBadge,
+    vehiclesModeBadge,
+    uniformsModeBadge
+  ].forEach((badge) => {
+    if (badge) {
+      badge.textContent = modeText;
+      badge.classList.toggle("module-mode-badge--on", modeEnabled);
+      badge.classList.toggle("module-mode-badge--off", !modeEnabled);
+    }
+  });
+
+  moduleNavLinks.forEach((link) => {
+    if (!link) {
+      return;
+    }
+
+    link.classList.toggle("is-auto-filters-on", modeEnabled);
+    link.classList.toggle("is-auto-filters-off", !modeEnabled);
+  });
+}
+
+function toggleAutoApplySavedFilters() {
+  if (!isCurrentUserAdmin()) {
+    showToast("Solo los administradores pueden cambiar este modo.", "warning");
+    return;
+  }
+
+  const nextValue = !isAutoApplySavedFiltersEnabled();
+  setAutoApplySavedFiltersEnabled(nextValue);
+  showToast(
+    nextValue
+      ? "Apertura con filtros guardados activada."
+      : "Apertura en modo predeterminado activada.",
+    "info"
+  );
+}
+
+function applyFiltersOnOpen(loadFiltersFn, resetFiltersFn) {
+  if (isAutoApplySavedFiltersEnabled()) {
+    loadFiltersFn();
+    return;
+  }
+  resetFiltersFn();
+}
+
+function saveModuleFilters(moduleKey, payload, label) {
+  if (!isCurrentUserAdmin()) {
+    showToast(`Solo los administradores pueden guardar filtros de ${label}.`, "warning");
+    return false;
+  }
+
+  try {
+    localStorage.setItem(getModuleFiltersStorageKey(moduleKey), JSON.stringify({ ...payload, savedAt: new Date().toISOString() }));
+    showToast(`Filtros de ${label} guardados.`, "success");
+    return true;
+  } catch {
+    alert("No se pudieron guardar los filtros en este navegador.");
+    return false;
+  }
+}
+
+function loadModuleFilters(moduleKey) {
+  if (!isCurrentUserAdmin()) {
+    showToast("Solo los administradores pueden cargar filtros guardados.", "warning");
+    return null;
+  }
+
+  const raw = localStorage.getItem(getModuleFiltersStorageKey(moduleKey));
+  if (!raw) {
+    return null;
+  }
+
+  try {
+    return JSON.parse(raw);
+  } catch {
+    return null;
+  }
+}
+
+function saveInventoryFiltersPreset() {
+  if (!isCurrentUserAdmin()) {
+    showToast("Solo los administradores pueden guardar filtros de inventario.", "warning");
+    return;
+  }
+
+  const payload = {
+    search: String(searchInput.value || "").trim(),
+    estado: String(filterEstado.value || "Todos").trim(),
+    savedAt: new Date().toISOString()
+  };
+
+  try {
+    localStorage.setItem(getInventoryFiltersStorageKey(), JSON.stringify(payload));
+    showToast("Filtros de inventario guardados.", "success");
+  } catch {
+    alert("No se pudieron guardar los filtros en este navegador.");
+  }
+}
+
+function loadInventoryFiltersPreset(options = {}) {
+  const { notifyIfMissing = false } = options;
+  if (!isCurrentUserAdmin()) {
+    return false;
+  }
+
+  const raw = localStorage.getItem(getInventoryFiltersStorageKey());
+
+  if (!raw) {
+    if (notifyIfMissing) {
+      showToast("No hay filtros guardados para este usuario.", "info");
+    }
+    return false;
+  }
+
+  try {
+    const preset = JSON.parse(raw);
+    searchInput.value = String(preset?.search || "");
+    const nextEstado = String(preset?.estado || "Todos");
+    filterEstado.value = nextEstado || "Todos";
+    render();
+    return true;
+  } catch {
+    if (notifyIfMissing) {
+      showToast("Los filtros guardados son inválidos y se omitieron.", "warning");
+    }
+    return false;
+  }
+}
+
+function resetInventoryFilters(options = {}) {
+  if (!isCurrentUserAdmin()) {
+    return;
+  }
+
+  const { notify = false } = options;
+  searchInput.value = "";
+  filterEstado.value = "Todos";
+  render();
+  if (notify) {
+    showToast("Filtros de inventario restablecidos.", "info");
+  }
+}
+
+function saveGuardFiltersPreset() {
+  saveModuleFilters("guard", {
+    search: String(guardSearchInput.value || ""),
+    turno: String(guardFilterTurno.value || "Todos"),
+    tipo: String(guardFilterTipo.value || "Todos")
+  }, "Guardia");
+}
+
+function loadGuardFiltersPreset(options = {}) {
+  const { notifyIfMissing = false } = options;
+  const preset = loadModuleFilters("guard");
+  if (!preset) {
+    if (notifyIfMissing) {
+      showToast("No hay filtros guardados para Guardia.", "info");
+    }
+    return false;
+  }
+  guardSearchInput.value = String(preset.search || "");
+  guardFilterTurno.value = String(preset.turno || "Todos");
+  guardFilterTipo.value = String(preset.tipo || "Todos");
+  renderGuardBook();
+  return true;
+}
+
+function resetGuardFilters(options = {}) {
+  if (!isCurrentUserAdmin()) {
+    return;
+  }
+
+  const { notify = false } = options;
+  guardSearchInput.value = "";
+  guardFilterTurno.value = "Todos";
+  guardFilterTipo.value = "Todos";
+  renderGuardBook();
+  if (notify) {
+    showToast("Filtros de Guardia restablecidos.", "info");
+  }
+}
+
+function saveMedicalFiltersPreset() {
+  saveModuleFilters("medical", {
+    search: String(medicalSearchInput.value || "")
+  }, "Fichas Médicas");
+}
+
+function loadMedicalFiltersPreset(options = {}) {
+  const { notifyIfMissing = false } = options;
+  const preset = loadModuleFilters("medical");
+  if (!preset) {
+    if (notifyIfMissing) {
+      showToast("No hay filtros guardados para Fichas Médicas.", "info");
+    }
+    return false;
+  }
+  medicalSearchInput.value = String(preset.search || "");
+  renderMedicalRecords();
+  return true;
+}
+
+function resetMedicalFilters(options = {}) {
+  if (!isCurrentUserAdmin()) {
+    return;
+  }
+
+  const { notify = false } = options;
+  medicalSearchInput.value = "";
+  renderMedicalRecords();
+  if (notify) {
+    showToast("Filtros de Fichas Médicas restablecidos.", "info");
+  }
+}
+
+function saveCoursesFiltersPreset() {
+  saveModuleFilters("courses", {
+    search: String(coursesSearchInput.value || "")
+  }, "Cursos");
+}
+
+function loadCoursesFiltersPreset(options = {}) {
+  const { notifyIfMissing = false } = options;
+  const preset = loadModuleFilters("courses");
+  if (!preset) {
+    if (notifyIfMissing) {
+      showToast("No hay filtros guardados para Cursos.", "info");
+    }
+    return false;
+  }
+  coursesSearchInput.value = String(preset.search || "");
+  renderCourses();
+  return true;
+}
+
+function resetCoursesFilters(options = {}) {
+  if (!isCurrentUserAdmin()) {
+    return;
+  }
+
+  const { notify = false } = options;
+  coursesSearchInput.value = "";
+  renderCourses();
+  if (notify) {
+    showToast("Filtros de Cursos restablecidos.", "info");
+  }
+}
+
+function saveDayOrdersFiltersPreset() {
+  saveModuleFilters("dayorders", {
+    search: String(dayOrdersSearchInput.value || ""),
+    tipo: String(dayOrdersFilterTipo.value || "Todos")
+  }, "Órdenes del Día");
+}
+
+function loadDayOrdersFiltersPreset(options = {}) {
+  const { notifyIfMissing = false } = options;
+  const preset = loadModuleFilters("dayorders");
+  if (!preset) {
+    if (notifyIfMissing) {
+      showToast("No hay filtros guardados para Órdenes del Día.", "info");
+    }
+    return false;
+  }
+  dayOrdersSearchInput.value = String(preset.search || "");
+  dayOrdersFilterTipo.value = String(preset.tipo || "Todos");
+  renderDayOrders();
+  return true;
+}
+
+function resetDayOrdersFilters(options = {}) {
+  if (!isCurrentUserAdmin()) {
+    return;
+  }
+
+  const { notify = false } = options;
+  dayOrdersSearchInput.value = "";
+  dayOrdersFilterTipo.value = "Todos";
+  renderDayOrders();
+  if (notify) {
+    showToast("Filtros de Órdenes del Día restablecidos.", "info");
+  }
+}
+
+function saveVehiclesFiltersPreset() {
+  saveModuleFilters("vehicles", {
+    search: String(vehiclesSearchInput.value || ""),
+    status: String(vehiclesFilterStatus.value || "Todos")
+  }, "Carros");
+}
+
+function loadVehiclesFiltersPreset(options = {}) {
+  const { notifyIfMissing = false } = options;
+  const preset = loadModuleFilters("vehicles");
+  if (!preset) {
+    if (notifyIfMissing) {
+      showToast("No hay filtros guardados para Carros.", "info");
+    }
+    return false;
+  }
+  vehiclesSearchInput.value = String(preset.search || "");
+  vehiclesFilterStatus.value = String(preset.status || "Todos");
+  renderVehicles();
+  return true;
+}
+
+function resetVehiclesFilters(options = {}) {
+  if (!isCurrentUserAdmin()) {
+    return;
+  }
+
+  const { notify = false } = options;
+  vehiclesSearchInput.value = "";
+  vehiclesFilterStatus.value = "Todos";
+  renderVehicles();
+  if (notify) {
+    showToast("Filtros de Carros restablecidos.", "info");
+  }
+}
+
+function saveUniformsFiltersPreset() {
+  saveModuleFilters("uniforms", {
+    search: String(uniformsSearchInput.value || ""),
+    movement: String(uniformsFilterMovement.value || "Todos"),
+    status: String(uniformsFilterStatus.value || "Todos")
+  }, "Uniformes");
+}
+
+function loadUniformsFiltersPreset(options = {}) {
+  const { notifyIfMissing = false } = options;
+  const preset = loadModuleFilters("uniforms");
+  if (!preset) {
+    if (notifyIfMissing) {
+      showToast("No hay filtros guardados para Uniformes.", "info");
+    }
+    return false;
+  }
+  uniformsSearchInput.value = String(preset.search || "");
+  uniformsFilterMovement.value = String(preset.movement || "Todos");
+  uniformsFilterStatus.value = String(preset.status || "Todos");
+  renderUniforms();
+  return true;
+}
+
+function resetUniformsFilters(options = {}) {
+  if (!isCurrentUserAdmin()) {
+    return;
+  }
+
+  const { notify = false } = options;
+  uniformsSearchInput.value = "";
+  uniformsFilterMovement.value = "Todos";
+  uniformsFilterStatus.value = "Todos";
+  renderUniforms();
+  if (notify) {
+    showToast("Filtros de Uniformes restablecidos.", "info");
+  }
+}
+
+function clearAllSavedFilters() {
+  if (!isCurrentUserAdmin()) {
+    showToast("Solo los administradores pueden limpiar filtros guardados.", "warning");
+    return;
+  }
+
+  if (!currentUser) {
+    showToast("Debes iniciar sesión para limpiar filtros guardados.", "warning");
+    return;
+  }
+
+  const shouldClear = window.confirm("Se eliminarán todos tus filtros guardados en este navegador. ¿Continuar?");
+  if (!shouldClear) {
+    return;
+  }
+
+  const userPart = String(currentUser?.id || currentUser?.username || "anon").trim();
+  const companyPart = String(currentUser?.companyId || "global").trim();
+  const keys = [
+    `inventory_filters::${companyPart}::${userPart}`,
+    `module_filters::guard::${companyPart}::${userPart}`,
+    `module_filters::medical::${companyPart}::${userPart}`,
+    `module_filters::courses::${companyPart}::${userPart}`,
+    `module_filters::dayorders::${companyPart}::${userPart}`,
+    `module_filters::vehicles::${companyPart}::${userPart}`,
+    `module_filters::uniforms::${companyPart}::${userPart}`
+  ];
+
+  keys.forEach((key) => localStorage.removeItem(key));
+  showToast("Se limpiaron todos los filtros guardados del usuario.", "success");
+}
+
 function render() {
   const rows = getFilteredInventory();
   tableBody.innerHTML = "";
@@ -722,6 +1608,8 @@ function render() {
   rows.forEach((item, idx) => {
     const row = rowTemplate.content.firstElementChild.cloneNode(true);
     const alertData = getAlertData(item);
+
+    applyCellLabels(row, ["Articulo", "Categoria", "Cantidad", "Minimo", "Estado", "Vencimiento", "Alertas", "Ubicacion", "Acciones"]);
 
     row.querySelector('[data-field="nombre"]').textContent = item.nombre;
     row.querySelector('[data-field="categoria"]').textContent = item.categoria;
@@ -954,6 +1842,7 @@ function showAuthScreen() {
   homeLanding.classList.add("hidden");
   mainDashboard.classList.add("hidden");
   mainMenu.classList.add("hidden");
+  manageUsersBtn.classList.add("hidden");
   closeUsersModal();
   closeGuardModal();
   closeMedicalModal();
@@ -973,12 +1862,15 @@ function showAppScreen() {
   const userDisplayText = `${currentUser?.nombre || "Usuario"} (${currentUser?.username || ""})`;
   userInfoNav.textContent = userDisplayText;
   userInfoDropdown.textContent = userDisplayText;
-  manageUsersBtn.classList.add("hidden");
-  menuOpenUsers.classList.toggle("hidden", !permissions.canManageUsers);
+  manageUsersBtn.classList.toggle("hidden", !permissions.canManageUsers);
   applyPermissionState();
+  updateAutoApplySavedFiltersButton();
+  updateSavedFiltersModeIndicators();
+  loadLastModuleFromStorage();
 
   showStartMenu();
   setActiveNav(null);
+  applyFiltersOnOpen(loadInventoryFiltersPreset, resetInventoryFilters);
 }
 
 function showAuthError(message) {
@@ -1036,7 +1928,6 @@ async function openUsersModal() {
   try {
     await refreshUsers();
     openFeatureModal(usersModal);
-    setActiveNav(menuOpenUsers);
   } catch (error) {
     alert(error.message || "No se pudo cargar la gestión de usuarios.");
   }
@@ -1047,6 +1938,8 @@ async function openGuardModal() {
     await refreshGuardBook();
     openFeatureModal(guardModal);
     setActiveNav(menuOpenGuard);
+    setLastModule("guard");
+    applyFiltersOnOpen(loadGuardFiltersPreset, resetGuardFilters);
   } catch (error) {
     alert(error.message || "No se pudo cargar el libro de guardia.");
   }
@@ -1057,6 +1950,8 @@ async function openMedicalModal() {
     await refreshMedicalRecords();
     openFeatureModal(medicalModal);
     setActiveNav(menuOpenMedical);
+    setLastModule("medical");
+    applyFiltersOnOpen(loadMedicalFiltersPreset, resetMedicalFilters);
   } catch (error) {
     alert(error.message || "No se pudo cargar las fichas medicas.");
   }
@@ -1067,6 +1962,8 @@ async function openCoursesModal() {
     await refreshCourses();
     openFeatureModal(coursesModal);
     setActiveNav(menuOpenCourses);
+    setLastModule("courses");
+    applyFiltersOnOpen(loadCoursesFiltersPreset, resetCoursesFilters);
   } catch (error) {
     alert(error.message || "No se pudo cargar los cursos de voluntarios.");
   }
@@ -1075,8 +1972,11 @@ async function openCoursesModal() {
 async function openDayOrdersModal() {
   try {
     await refreshDayOrders();
+    await refreshDayOrderPdfs();
     openFeatureModal(dayOrdersModal);
     setActiveNav(menuOpenDayOrders);
+    setLastModule("dayorders");
+    applyFiltersOnOpen(loadDayOrdersFiltersPreset, resetDayOrdersFilters);
   } catch (error) {
     alert(error.message || "No se pudo cargar las ordenes del dia.");
   }
@@ -1087,6 +1987,8 @@ async function openVehiclesModal() {
     await refreshVehicles();
     openFeatureModal(vehiclesModal);
     setActiveNav(menuOpenVehicles);
+    setLastModule("vehicles");
+    applyFiltersOnOpen(loadVehiclesFiltersPreset, resetVehiclesFilters);
   } catch (error) {
     alert(error.message || "No se pudo cargar los carros.");
   }
@@ -1097,6 +1999,8 @@ async function openUniformsModal() {
     await refreshUniforms();
     openFeatureModal(uniformsModal);
     setActiveNav(menuOpenUniforms);
+    setLastModule("uniforms");
+    applyFiltersOnOpen(loadUniformsFiltersPreset, resetUniformsFilters);
   } catch (error) {
     alert(error.message || "No se pudo cargar inventario de uniformes.");
   }
@@ -1119,6 +2023,8 @@ function openInventoryModule() {
   hideStartMenu();
   mainHeader.classList.remove("hidden");
   setActiveNav(menuOpenInventory);
+  setLastModule("inventory");
+  applyFiltersOnOpen(loadInventoryFiltersPreset, resetInventoryFilters);
 }
 
 function openHomeModule() {
@@ -1147,6 +2053,193 @@ function onQuickReport() {
   reportInventoryBtn.click();
 }
 
+function onGlobalShortcutKeyDown(event) {
+  const isSearchShortcut = (event.ctrlKey || event.metaKey) && String(event.key || "").toLowerCase() === "k";
+  if (!isSearchShortcut) {
+    return;
+  }
+
+  event.preventDefault();
+  openHomeModule();
+  if (quickGlobalSearchInput) {
+    quickGlobalSearchInput.focus();
+    quickGlobalSearchInput.select();
+  }
+}
+
+async function onQuickGlobalSearch() {
+  const term = String(quickGlobalSearchInput?.value || "").trim();
+  if (!term) {
+    alert("Ingresa un texto para buscar.");
+    return;
+  }
+
+  const normalized = term.toLowerCase();
+  const countByModule = [
+    {
+      module: "Inventario",
+      count: inventory.filter((item) => `${item.nombre || ""} ${item.categoria || ""} ${item.ubicacion || ""} ${item.notas || ""}`.toLowerCase().includes(normalized)).length,
+      run: () => {
+        openInventoryModule();
+        searchInput.value = term;
+        render();
+        inventorySection.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
+    },
+    {
+      module: "Libro de Guardia",
+      count: guardEntries.filter((entry) => `${entry.descripcion || ""} ${entry.recurso || ""} ${entry.autorNombre || ""}`.toLowerCase().includes(normalized)).length,
+      run: async () => {
+        await openGuardModal();
+        guardSearchInput.value = term;
+        renderGuardBook();
+      }
+    },
+    {
+      module: "Fichas Médicas",
+      count: medicalRecords.filter((record) => `${record.voluntarioNombre || ""} ${record.grupoSanguineo || ""}`.toLowerCase().includes(normalized)).length,
+      run: async () => {
+        await openMedicalModal();
+        medicalSearchInput.value = term;
+        renderMedicalRecords();
+      }
+    },
+    {
+      module: "Cursos",
+      count: volunteerCourses.filter((course) => `${course.voluntarioNombre || ""} ${course.curso || ""} ${course.institucion || ""} ${course.certificacion || ""}`.toLowerCase().includes(normalized)).length,
+      run: async () => {
+        await openCoursesModal();
+        coursesSearchInput.value = term;
+        renderCourses();
+      }
+    },
+    {
+      module: "Órdenes del Día",
+      count: dayOrders.filter((order) => `${order.titulo || ""} ${order.contenido || ""} ${order.firmadoPor || ""}`.toLowerCase().includes(normalized)).length,
+      run: async () => {
+        await openDayOrdersModal();
+        dayOrdersSearchInput.value = term;
+        renderDayOrders();
+      }
+    },
+    {
+      module: "Carros",
+      count: vehicles.filter((vehicle) => `${vehicle.nombre || ""} ${vehicle.codigo || ""} ${vehicle.patente || ""} ${vehicle.marcaModelo || ""} ${vehicle.observaciones || ""}`.toLowerCase().includes(normalized)).length,
+      run: async () => {
+        await openVehiclesModal();
+        vehiclesSearchInput.value = term;
+        renderVehicles();
+      }
+    },
+    {
+      module: "Uniformes",
+      count: uniforms.filter((record) => `${record.voluntarioNombre || ""} ${record.prenda || ""} ${record.talla || ""} ${record.observaciones || ""}`.toLowerCase().includes(normalized)).length,
+      run: async () => {
+        await openUniformsModal();
+        uniformsSearchInput.value = term;
+        renderUniforms();
+      }
+    }
+  ];
+
+  const bestMatch = countByModule
+    .sort((a, b) => b.count - a.count)
+    .find((candidate) => candidate.count > 0);
+
+  if (!bestMatch) {
+    alert("No se encontraron coincidencias en los módulos operativos.");
+    return;
+  }
+
+  await bestMatch.run();
+  showToast(
+    `Búsqueda global enviada a ${bestMatch.module} (${bestMatch.count} coincidencias).`,
+    "success",
+    {
+      actionLabel: "Reabrir",
+      onAction: async () => {
+        await bestMatch.run();
+      }
+    }
+  );
+}
+
+function inferToastType(message) {
+  const text = String(message || "").toLowerCase();
+  if (text.includes("no se pudo") || text.includes("error") || text.includes("no tienes permiso")) {
+    return "error";
+  }
+  if (text.includes("completa") || text.includes("ingresa") || text.includes("selecciona")) {
+    return "warning";
+  }
+  if (text.includes("actualizada") || text.includes("guardado") || text.includes("creado") || text.includes("enviado")) {
+    return "success";
+  }
+  return "info";
+}
+
+function showToast(message, type = "info", options = {}) {
+  const text = String(message || "").trim();
+  if (!text) {
+    return;
+  }
+
+  if (!toastContainerEl) {
+    nativeAlert(text);
+    return;
+  }
+
+  const toast = document.createElement("div");
+  toast.className = `app-toast app-toast-${type}`;
+
+  const content = document.createElement("div");
+  content.className = "app-toast-content";
+  content.textContent = text;
+  toast.appendChild(content);
+
+  if (typeof options.onAction === "function" && options.actionLabel) {
+    const actionBtn = document.createElement("button");
+    actionBtn.type = "button";
+    actionBtn.className = "app-toast-action";
+    actionBtn.textContent = String(options.actionLabel);
+    actionBtn.addEventListener("click", () => {
+      try {
+        const result = options.onAction();
+        if (result && typeof result.then === "function") {
+          result.catch((error) => {
+            console.error(error);
+          });
+        }
+      } finally {
+        dismiss();
+      }
+    });
+    toast.appendChild(actionBtn);
+  }
+
+  toastContainerEl.appendChild(toast);
+
+  requestAnimationFrame(() => {
+    toast.classList.add("is-visible");
+  });
+
+  const dismiss = () => {
+    toast.classList.remove("is-visible");
+    toast.classList.add("is-leaving");
+    setTimeout(() => toast.remove(), 200);
+  };
+
+  setTimeout(dismiss, type === "error" ? 4800 : 3200);
+}
+
+window.alert = (message) => {
+  const text = String(message || "").trim();
+  if (!text) {
+    return;
+  }
+  showToast(text, inferToastType(text));
+};
+
 function setActiveNav(activeLink) {
   menuNavLinks.forEach((link) => {
     if (!link) {
@@ -1158,6 +2251,17 @@ function setActiveNav(activeLink) {
   if (activeLink) {
     activeLink.classList.add("is-active");
   }
+}
+
+function applyCellLabels(row, labels) {
+  const cells = row.querySelectorAll("td");
+  labels.forEach((label, index) => {
+    const cell = cells[index];
+    if (!cell) {
+      return;
+    }
+    cell.setAttribute("data-label", label);
+  });
 }
 
 function closeUsersModal(options = {}) {
@@ -1181,6 +2285,9 @@ function closeDayOrdersModal(options = {}) {
 }
 
 function closeVehiclesModal(options = {}) {
+  closeVehicleDrawerPanel();
+  vehicleViewerState.editMode = false;
+  vehicleEditorPanel.classList.add("hidden");
   closeFeatureModal(vehiclesModal, options);
 }
 
@@ -1356,6 +2463,8 @@ function renderUsers() {
       <td>${user.blocked ? "Bloqueado" : "Activo"}</td>
       <td class="actions-cell"></td>
     `;
+
+    applyCellLabels(tr, ["Nombre", "Usuario", "Correo", "Telefono", "Rol", "Ultimo acceso", "Permisos", "Estado", "Acciones"]);
 
     const actions = tr.querySelector(".actions-cell");
 
@@ -1555,6 +2664,18 @@ function applyPermissionState() {
     dayOrderCancelEditBtn.hidden = true;
   }
 
+  if (dayOrderPdfTitle) {
+    dayOrderPdfTitle.disabled = dayOrdersDisabled;
+  }
+
+  if (dayOrderPdfFile) {
+    dayOrderPdfFile.disabled = dayOrdersDisabled;
+  }
+
+  if (uploadDayOrderPdfBtn) {
+    uploadDayOrderPdfBtn.disabled = dayOrdersDisabled;
+  }
+
   const vehiclesDisabled = !permissions.canWriteVehicles;
   const vehicleFields = vehiclesForm.querySelectorAll("input, select, textarea, button");
   vehicleFields.forEach((field) => {
@@ -1642,6 +2763,9 @@ function renderGuardBook() {
       <td>${escapeHtml(entry.autorNombre || "-")}</td>
       <td>${escapeHtml(formatDateTime(entry.creadoEn))}</td>
     `;
+
+    applyCellLabels(tr, ["Fecha", "Turno", "Tipo", "Recurso", "Descripcion", "Autor", "Registro"]);
+
     guardTableBody.appendChild(tr);
   });
 
@@ -1681,6 +2805,8 @@ function renderMedicalRecords() {
       <td>${escapeHtml(record.actualizadoPor || "-")}</td>
       <td class="actions-cell"></td>
     `;
+
+    applyCellLabels(tr, ["Voluntario", "Grupo", "Alergias", "Enfermedades", "Medicamentos", "Contacto", "Telefono", "Relacion", "Actualizado", "Por", "Acciones"]);
 
     const actions = tr.querySelector(".actions-cell");
 
@@ -1834,6 +2960,8 @@ function renderCourses() {
       <td>${escapeHtml(course.actualizadoPor || "-")}</td>
       <td class="actions-cell"></td>
     `;
+
+    applyCellLabels(tr, ["Voluntario", "Curso", "Institucion", "Inicio", "Fin", "Certificacion", "Horas", "Actualizado", "Por", "Acciones"]);
 
     const actions = tr.querySelector(".actions-cell");
 
@@ -1990,6 +3118,8 @@ function renderDayOrders() {
       <td class="actions-cell"></td>
     `;
 
+    applyCellLabels(tr, ["Fecha", "Tipo", "Titulo", "Contenido", "Firmado por", "Publicado", "Acciones"]);
+
     const actions = tr.querySelector(".actions-cell");
 
     const editBtn = document.createElement("button");
@@ -2098,6 +3228,81 @@ async function onDayOrderSubmit(event) {
   }
 }
 
+async function onUploadDayOrderPdf() {
+  if (!permissions.canWriteDayOrders) {
+    alert("Tu rol es solo lectura. No puedes subir PDFs de ordenes del dia.");
+    return;
+  }
+
+  const selectedFile = dayOrderPdfFile?.files?.[0];
+  if (!selectedFile) {
+    if (dayOrderPdfUploadStatus) {
+      dayOrderPdfUploadStatus.textContent = "Selecciona un archivo PDF antes de subir.";
+    }
+    return;
+  }
+
+  const fileType = String(selectedFile.type || "").toLowerCase();
+  const fileName = String(selectedFile.name || "").toLowerCase();
+  const looksLikePdf = fileType === "application/pdf" || fileName.endsWith(".pdf");
+
+  if (!looksLikePdf) {
+    if (dayOrderPdfUploadStatus) {
+      dayOrderPdfUploadStatus.textContent = "El archivo debe ser un PDF válido.";
+    }
+    return;
+  }
+
+  if (selectedFile.size > 10 * 1024 * 1024) {
+    if (dayOrderPdfUploadStatus) {
+      dayOrderPdfUploadStatus.textContent = "El PDF supera el límite de 10 MB.";
+    }
+    return;
+  }
+
+  const title = String(dayOrderPdfTitle?.value || "").trim();
+  const formData = new FormData();
+  formData.append("pdf", selectedFile);
+  if (title) {
+    formData.append("titulo", title);
+  }
+
+  if (dayOrderPdfUploadStatus) {
+    dayOrderPdfUploadStatus.textContent = "Subiendo PDF...";
+  }
+  uploadDayOrderPdfBtn.disabled = true;
+
+  try {
+    const response = await fetch("/api/day-orders/pdfs/upload", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${authToken}`
+      },
+      body: formData
+    });
+
+    const payload = await safeJson(response);
+    if (!response.ok) {
+      throw new Error(payload?.error || "No se pudo subir el PDF.");
+    }
+
+    dayOrderPdfTitle.value = "";
+    dayOrderPdfFile.value = "";
+    await refreshDayOrderPdfs();
+
+    if (dayOrderPdfUploadStatus) {
+      const uploadedName = payload?.pdf?.titulo || payload?.pdf?.originalName || "PDF";
+      dayOrderPdfUploadStatus.textContent = `PDF subido correctamente: ${uploadedName}`;
+    }
+  } catch (error) {
+    if (dayOrderPdfUploadStatus) {
+      dayOrderPdfUploadStatus.textContent = error.message || "No se pudo subir el PDF.";
+    }
+  } finally {
+    uploadDayOrderPdfBtn.disabled = !permissions.canWriteDayOrders;
+  }
+}
+
 function resetDayOrderForm() {
   dayOrdersForm.reset();
   dayOrderId.value = "";
@@ -2113,10 +3318,24 @@ function getFilteredVehicles() {
 
   return vehicles.filter((vehicle) => {
     const matchesStatus = status === "Todos" || vehicle.estadoOperativo === status;
-    const haystack = `${vehicle.codigo || ""} ${vehicle.patente || ""} ${vehicle.marcaModelo || ""} ${vehicle.observaciones || ""}`.toLowerCase();
+    const haystack = `${vehicle.nombre || ""} ${vehicle.codigo || ""} ${vehicle.patente || ""} ${vehicle.marcaModelo || ""} ${vehicle.observaciones || ""}`.toLowerCase();
     const matchesTerm = !term || haystack.includes(term);
     return matchesStatus && matchesTerm;
   });
+}
+
+function getVehicleDisplayName(vehicle) {
+  const nombre = String(vehicle?.nombre || "").trim();
+  if (nombre) {
+    return nombre;
+  }
+
+  const marcaModelo = String(vehicle?.marcaModelo || "").trim();
+  if (marcaModelo) {
+    return marcaModelo;
+  }
+
+  return String(vehicle?.codigo || "Carro").trim() || "Carro";
 }
 
 function renderVehicles() {
@@ -2133,6 +3352,7 @@ function renderVehicles() {
 
     const statusClass = getVehicleStatusClass(vehicle.estadoOperativo);
     tr.innerHTML = `
+      <td>${escapeHtml(getVehicleDisplayName(vehicle))}</td>
       <td>${escapeHtml(vehicle.codigo)}</td>
       <td>${escapeHtml(vehicle.patente)}</td>
       <td>${escapeHtml(vehicle.marcaModelo)}</td>
@@ -2169,6 +3389,1054 @@ function renderVehicles() {
   });
 
   vehiclesEmptyState.classList.toggle("hidden", rows.length > 0);
+  renderVehiclePhotoViewer(rows);
+}
+
+function onVehicleViewerVehicleChange() {
+  vehicleViewerState.vehicleId = vehiclesViewerVehicle.value;
+  vehicleViewerState.angle = "left";
+  vehicleViewerState.activeDrawerId = "";
+  vehicleViewerState.activeDrawerItemIndex = 0;
+  vehicleViewerState.dirtyMedia = false;
+  renderVehiclePhotoViewer(getFilteredVehicles());
+}
+
+function getVehiclePhotoGallery(vehicle) {
+  const source = Array.isArray(vehicle?.photoGallery) ? vehicle.photoGallery : [];
+  const normalized = source
+    .map((entry) => ({
+      angle: String(entry?.angle || "").trim().toLowerCase(),
+      label: String(entry?.label || "").trim(),
+      image: String(entry?.image || "").trim()
+    }))
+    .filter((entry) => ["left", "right", "rear"].includes(entry.angle) && entry.image);
+
+  if (normalized.length > 0) {
+    return normalized;
+  }
+
+  return [
+    { angle: "left", label: "Lado izquierdo", image: FALLBACK_VEHICLE_PHOTO_BY_ANGLE.left },
+    { angle: "right", label: "Lado derecho", image: FALLBACK_VEHICLE_PHOTO_BY_ANGLE.right },
+    { angle: "rear", label: "Parte trasera", image: FALLBACK_VEHICLE_PHOTO_BY_ANGLE.rear }
+  ];
+}
+
+function getVehicleDrawers(vehicle) {
+  if (!Array.isArray(vehicle?.drawerInventory)) {
+    return [];
+  }
+
+  return vehicle.drawerInventory
+    .map((drawer) => ({
+      id: String(drawer?.id || "").trim(),
+      nombre: String(drawer?.nombre || "").trim(),
+      angle: String(drawer?.angle || "").trim().toLowerCase(),
+      x: clamp(Number(drawer?.x), 4, 96),
+      y: clamp(Number(drawer?.y), 10, 90),
+      items: normalizeDrawerItems(drawer)
+    }))
+    .map((drawer) => ({
+      ...drawer,
+      item: drawer.items[0]
+    }))
+    .filter((drawer) => drawer.id && ["left", "right", "rear"].includes(drawer.angle));
+}
+
+function normalizeDrawerItems(drawer) {
+  const source = Array.isArray(drawer?.items)
+    ? drawer.items
+    : drawer?.item
+      ? [drawer.item]
+      : [];
+
+  const normalized = source
+    .map((item) => ({
+      nombre: String(item?.nombre || "").trim() || "Sin item asignado",
+      estado: String(item?.estado || "").trim() || "Sin estado",
+      imagen: String(item?.imagen || "").trim() || "logo.png",
+      descripcion: String(item?.descripcion || "").trim() || "No hay descripción disponible."
+    }))
+    .filter((item) => item.nombre);
+
+  if (normalized.length > 0) {
+    return normalized;
+  }
+
+  return [
+    {
+      nombre: "Sin item asignado",
+      estado: "Sin estado",
+      imagen: "logo.png",
+      descripcion: "No hay descripción disponible."
+    }
+  ];
+}
+
+function renderVehiclePhotoViewer(filteredVehicles = []) {
+  if (!vehiclesViewerVehicle || !vehicleViewerAngles || !vehiclePhotoMain || !vehicleHotspotsLayer || !vehiclePhotoHint) {
+    return;
+  }
+
+  const rows = Array.isArray(filteredVehicles) ? filteredVehicles : [];
+  vehiclesViewerVehicle.innerHTML = "";
+
+  if (rows.length === 0) {
+    vehiclePhotoMain.src = FALLBACK_VEHICLE_PHOTO_BY_ANGLE.left;
+    vehiclePhotoMain.alt = "No hay carros disponibles para mostrar";
+    vehicleViewerAngles.innerHTML = "";
+    vehicleHotspotsLayer.innerHTML = "";
+    vehiclePhotoHint.textContent = "No hay carros que coincidan con el filtro actual.";
+    closeVehicleDrawerPanel();
+    updateVehicleMediaControls(null, []);
+    return;
+  }
+
+  rows.forEach((vehicle) => {
+    const option = document.createElement("option");
+    option.value = vehicle.id;
+    option.textContent = `${getVehicleDisplayName(vehicle)} · ${vehicle.codigo} (${vehicle.patente})`;
+    vehiclesViewerVehicle.appendChild(option);
+  });
+
+  const hasCurrentSelection = rows.some((vehicle) => vehicle.id === vehicleViewerState.vehicleId);
+  if (!hasCurrentSelection) {
+    vehicleViewerState.vehicleId = rows[0].id;
+    vehicleViewerState.activeDrawerId = "";
+  }
+
+  vehiclesViewerVehicle.value = vehicleViewerState.vehicleId;
+
+  const selectedVehicle = rows.find((vehicle) => vehicle.id === vehicleViewerState.vehicleId) || rows[0];
+  const gallery = getVehiclePhotoGallery(selectedVehicle);
+  const allDrawers = getVehicleDrawers(selectedVehicle);
+  const hasCurrentAngle = gallery.some((photo) => photo.angle === vehicleViewerState.angle);
+  if (!hasCurrentAngle) {
+    vehicleViewerState.angle = gallery[0].angle;
+    vehicleViewerState.activeDrawerId = "";
+  }
+
+  vehicleViewerAngles.innerHTML = "";
+  gallery.forEach((photo) => {
+    const angleBtn = document.createElement("button");
+    angleBtn.type = "button";
+    angleBtn.className = "vehicle-angle-btn";
+    if (photo.angle === vehicleViewerState.angle) {
+      angleBtn.classList.add("is-active");
+      angleBtn.setAttribute("aria-selected", "true");
+    } else {
+      angleBtn.setAttribute("aria-selected", "false");
+    }
+    angleBtn.setAttribute("role", "tab");
+    angleBtn.textContent = photo.label || photo.angle;
+    angleBtn.addEventListener("click", () => {
+      vehicleViewerState.angle = photo.angle;
+      vehicleViewerState.activeDrawerId = "";
+      vehicleViewerState.activeDrawerItemIndex = 0;
+      renderVehiclePhotoViewer(rows);
+    });
+    vehicleViewerAngles.appendChild(angleBtn);
+  });
+
+  const currentPhoto = gallery.find((photo) => photo.angle === vehicleViewerState.angle) || gallery[0];
+  vehiclePhotoMain.src = currentPhoto.image;
+  vehiclePhotoMain.alt = `Vista ${currentPhoto.label || currentPhoto.angle} del carro ${selectedVehicle.codigo}`;
+
+  const drawersInAngle = getVehicleDrawers(selectedVehicle).filter((drawer) => drawer.angle === vehicleViewerState.angle);
+  vehicleHotspotsLayer.innerHTML = "";
+
+  drawersInAngle.forEach((drawer) => {
+    const hotspot = document.createElement("button");
+    hotspot.type = "button";
+    hotspot.className = "vehicle-hotspot";
+    hotspot.dataset.drawerId = drawer.id;
+    hotspot.style.left = `${drawer.x}%`;
+    hotspot.style.top = `${drawer.y}%`;
+    hotspot.textContent = drawer.id;
+    hotspot.setAttribute("aria-label", `Abrir inventario de ${drawer.nombre || drawer.id}`);
+
+    if (vehicleViewerState.activeDrawerId === drawer.id) {
+      hotspot.classList.add("is-active");
+    }
+
+    hotspot.addEventListener("click", () => {
+      vehicleViewerState.activeDrawerId = drawer.id;
+      vehicleViewerState.activeDrawerItemIndex = 0;
+      openVehicleDrawerPanel(drawer);
+      renderVehiclePhotoViewer(rows);
+    });
+
+    hotspot.addEventListener("pointerdown", (event) => {
+      onVehicleHotspotPointerDown(event, drawer.id);
+    });
+
+    vehicleHotspotsLayer.appendChild(hotspot);
+  });
+
+  if (drawersInAngle.length === 0) {
+    vehiclePhotoHint.textContent = "Este ángulo no tiene gavetas configuradas.";
+    closeVehicleDrawerPanel();
+    updateVehicleMediaControls(selectedVehicle, allDrawers);
+    return;
+  }
+
+  const activeDrawer = drawersInAngle.find((drawer) => drawer.id === vehicleViewerState.activeDrawerId);
+  if (activeDrawer) {
+    vehiclePhotoHint.textContent = "Gaveta activa resaltada en la foto.";
+    openVehicleDrawerPanel(activeDrawer);
+    updateVehicleMediaControls(selectedVehicle, allDrawers);
+    return;
+  }
+
+  vehiclePhotoHint.textContent = "Selecciona una gaveta para ver el inventario principal.";
+  closeVehicleDrawerPanel();
+  updateVehicleMediaControls(selectedVehicle, allDrawers);
+}
+
+function updateVehicleMediaControls(vehicle, drawers) {
+  const editable = Boolean(vehicle) && permissions.canWriteVehicles;
+
+  toggleVehicleEditorBtn.disabled = !editable;
+  saveVehicleViewerChangesBtn.disabled = !editable || !vehicleViewerState.dirtyMedia || vehicleViewerState.isSavingMedia;
+  createVehicleQuickBtn.disabled = !permissions.canWriteVehicles || vehicleViewerState.isSavingMedia;
+  deleteVehicleQuickBtn.disabled = !editable || vehicleViewerState.isSavingMedia;
+
+  if (!vehicle) {
+    vehiclePhotoLeftInput.value = "";
+    vehiclePhotoRightInput.value = "";
+    vehiclePhotoRearInput.value = "";
+    vehicleDrawerSelect.innerHTML = "";
+    vehicleDrawerNameInput.value = "";
+    vehicleDrawerItemSelect.innerHTML = "";
+    vehicleDrawerNameInput.disabled = true;
+    createVehicleDrawerBtn.disabled = true;
+    deleteVehicleDrawerBtn.disabled = true;
+    createVehicleDrawerItemBtn.disabled = true;
+    deleteVehicleDrawerItemBtn.disabled = true;
+    vehicleDrawerXRange.value = "0";
+    vehicleDrawerYRange.value = "0";
+    vehicleDrawerItemNameInput.value = "";
+    vehicleDrawerItemStatusInput.value = "";
+    vehicleDrawerItemImageInput.value = "";
+    vehicleDrawerItemDescriptionInput.value = "";
+    vehicleDrawerItemNameInput.disabled = true;
+    vehicleDrawerItemStatusInput.disabled = true;
+    vehicleDrawerItemImageInput.disabled = true;
+    vehicleDrawerItemDescriptionInput.disabled = true;
+    vehicleEditorValidation.textContent = "";
+    vehicleEditorValidation.classList.add("hidden");
+    vehicleDrawerCoordsLabel.textContent = "Selecciona una gaveta para ajustar coordenadas.";
+    toggleVehicleEditorBtn.textContent = "Editar hotspots y fotos";
+    vehicleMediaStatus.textContent = "Sin cambios pendientes.";
+    return;
+  }
+
+  const galleryByAngle = {
+    left: FALLBACK_VEHICLE_PHOTO_BY_ANGLE.left,
+    right: FALLBACK_VEHICLE_PHOTO_BY_ANGLE.right,
+    rear: FALLBACK_VEHICLE_PHOTO_BY_ANGLE.rear
+  };
+
+  getVehiclePhotoGallery(vehicle).forEach((entry) => {
+    galleryByAngle[entry.angle] = entry.image;
+  });
+
+  vehiclePhotoLeftInput.value = galleryByAngle.left;
+  vehiclePhotoRightInput.value = galleryByAngle.right;
+  vehiclePhotoRearInput.value = galleryByAngle.rear;
+
+  vehicleDrawerSelect.innerHTML = "";
+  drawers.forEach((drawer) => {
+    const option = document.createElement("option");
+    option.value = drawer.id;
+    option.textContent = `${drawer.id} - ${drawer.nombre}`;
+    vehicleDrawerSelect.appendChild(option);
+  });
+
+  if (drawers.length === 0) {
+    vehicleDrawerNameInput.value = "";
+    vehicleDrawerItemSelect.innerHTML = "";
+    vehicleDrawerNameInput.disabled = true;
+    createVehicleDrawerBtn.disabled = !editable;
+    deleteVehicleDrawerBtn.disabled = true;
+    createVehicleDrawerItemBtn.disabled = true;
+    deleteVehicleDrawerItemBtn.disabled = true;
+    vehicleDrawerXRange.value = "0";
+    vehicleDrawerYRange.value = "0";
+    vehicleDrawerItemNameInput.value = "";
+    vehicleDrawerItemStatusInput.value = "";
+    vehicleDrawerItemImageInput.value = "";
+    vehicleDrawerItemDescriptionInput.value = "";
+    vehicleDrawerItemNameInput.disabled = true;
+    vehicleDrawerItemStatusInput.disabled = true;
+    vehicleDrawerItemImageInput.disabled = true;
+    vehicleDrawerItemDescriptionInput.disabled = true;
+    vehicleDrawerCoordsLabel.textContent = "El carro no tiene gavetas para editar.";
+  } else {
+    const selectedDrawer = drawers.find((drawer) => drawer.id === vehicleViewerState.activeDrawerId) || drawers[0];
+    vehicleDrawerSelect.value = selectedDrawer.id;
+    vehicleViewerState.activeDrawerId = selectedDrawer.id;
+    vehicleDrawerNameInput.value = selectedDrawer.nombre || "";
+    vehicleDrawerNameInput.disabled = !editable;
+    createVehicleDrawerBtn.disabled = !editable;
+    deleteVehicleDrawerBtn.disabled = !editable;
+    createVehicleDrawerItemBtn.disabled = !editable;
+    vehicleDrawerXRange.value = String(Math.round(selectedDrawer.x));
+    vehicleDrawerYRange.value = String(Math.round(selectedDrawer.y));
+
+    const drawerItems = Array.isArray(selectedDrawer.items) ? selectedDrawer.items : [];
+    if (vehicleViewerState.activeDrawerItemIndex >= drawerItems.length) {
+      vehicleViewerState.activeDrawerItemIndex = 0;
+    }
+
+    vehicleDrawerItemSelect.innerHTML = "";
+    drawerItems.forEach((item, index) => {
+      const option = document.createElement("option");
+      option.value = String(index);
+      option.textContent = `${index + 1}. ${item.nombre}`;
+      vehicleDrawerItemSelect.appendChild(option);
+    });
+
+    const activeItem = drawerItems[vehicleViewerState.activeDrawerItemIndex] || drawerItems[0];
+    vehicleDrawerItemSelect.value = String(vehicleViewerState.activeDrawerItemIndex);
+    deleteVehicleDrawerItemBtn.disabled = !editable || drawerItems.length <= 1;
+    vehicleDrawerItemNameInput.value = activeItem?.nombre || "";
+    vehicleDrawerItemStatusInput.value = activeItem?.estado || "";
+    vehicleDrawerItemImageInput.value = activeItem?.imagen || "";
+    vehicleDrawerItemDescriptionInput.value = activeItem?.descripcion || "";
+    vehicleDrawerItemNameInput.disabled = !editable;
+    vehicleDrawerItemStatusInput.disabled = !editable;
+    vehicleDrawerItemImageInput.disabled = !editable;
+    vehicleDrawerItemDescriptionInput.disabled = !editable;
+    vehicleDrawerCoordsLabel.textContent = `Coordenadas de ${selectedDrawer.id}: X ${Math.round(selectedDrawer.x)}% / Y ${Math.round(selectedDrawer.y)}%`;
+  }
+
+  toggleVehicleEditorBtn.textContent = vehicleViewerState.editMode ? "Ocultar editor" : "Editar hotspots y fotos";
+  if (!editable) {
+    vehicleMediaStatus.textContent = "Solo lectura: sin permisos para editar carros.";
+  } else if (vehicleViewerState.isSavingMedia) {
+    vehicleMediaStatus.textContent = "Guardando cambios del visor...";
+  } else if (vehicleViewerState.dirtyMedia) {
+    vehicleMediaStatus.textContent = "Hay cambios sin guardar.";
+  } else {
+    vehicleMediaStatus.textContent = "Sin cambios pendientes.";
+  }
+
+  vehicleEditorValidation.textContent = "";
+  vehicleEditorValidation.classList.add("hidden");
+}
+
+function generateNextVehicleCode() {
+  const existing = new Set(
+    vehicles
+      .map((vehicle) => String(vehicle?.codigo || "").trim().toUpperCase())
+      .filter(Boolean)
+  );
+
+  for (let i = 1; i <= 999; i += 1) {
+    const code = `M-${i}`;
+    if (!existing.has(code)) {
+      return code;
+    }
+  }
+
+  return `M-${Date.now()}`;
+}
+
+function generateNextVehiclePlate() {
+  const suffix = String(Math.floor(Math.random() * 900) + 100);
+  return `ZZ${suffix}AA`;
+}
+
+async function createVehicleQuick() {
+  if (!permissions.canWriteVehicles) {
+    alert("Tu rol es solo lectura. No puedes agregar carros.");
+    return;
+  }
+
+  const generatedCode = generateNextVehicleCode();
+
+  const payload = {
+    nombre: `Carro ${generatedCode}`,
+    codigo: generatedCode,
+    patente: generateNextVehiclePlate(),
+    marcaModelo: "Nuevo carro",
+    anio: new Date().getFullYear(),
+    kilometraje: 0,
+    estadoOperativo: "Disponible",
+    ultimaMantencion: "",
+    proximaMantencionKm: 0,
+    revisionTecnicaVencimiento: "",
+    observaciones: "Registro creado desde visor de gavetas"
+  };
+
+  try {
+    const response = await api("/api/vehicles", {
+      method: "POST",
+      body: payload
+    });
+
+    await refreshVehicles();
+    if (response?.vehicle?.id) {
+      vehicleViewerState.vehicleId = response.vehicle.id;
+      vehicleViewerState.angle = "left";
+      vehicleViewerState.activeDrawerId = "";
+      vehicleViewerState.dirtyMedia = false;
+      renderVehiclePhotoViewer(getFilteredVehicles());
+    }
+  } catch (error) {
+    alert(error.message || "No se pudo crear el carro.");
+  }
+}
+
+async function deleteSelectedVehicleQuick() {
+  if (!permissions.canWriteVehicles) {
+    alert("Tu rol es solo lectura. No puedes eliminar carros.");
+    return;
+  }
+
+  const selectedVehicle = vehicles.find((vehicle) => vehicle.id === vehicleViewerState.vehicleId);
+  if (!selectedVehicle) {
+    alert("Selecciona un carro para eliminar.");
+    return;
+  }
+
+  const confirmDelete = confirm(`¿Eliminar el carro ${selectedVehicle.codigo} (${selectedVehicle.patente})?`);
+  if (!confirmDelete) {
+    return;
+  }
+
+  try {
+    await api(`/api/vehicles/${selectedVehicle.id}`, { method: "DELETE" });
+    vehicleViewerState.vehicleId = "";
+    vehicleViewerState.activeDrawerId = "";
+    vehicleViewerState.activeDrawerItemIndex = 0;
+    vehicleViewerState.dirtyMedia = false;
+    await refreshVehicles();
+  } catch (error) {
+    alert(error.message || "No se pudo eliminar el carro seleccionado.");
+  }
+}
+
+function toggleVehicleEditorMode() {
+  if (!permissions.canWriteVehicles) {
+    alert("Tu rol es solo lectura. No puedes editar fotos ni hotspots.");
+    return;
+  }
+
+  vehicleViewerState.editMode = !vehicleViewerState.editMode;
+  vehicleEditorPanel.classList.toggle("hidden", !vehicleViewerState.editMode);
+  renderVehiclePhotoViewer(getFilteredVehicles());
+}
+
+function onDrawerEditorSelectionChange() {
+  vehicleViewerState.activeDrawerId = vehicleDrawerSelect.value;
+  vehicleViewerState.activeDrawerItemIndex = 0;
+  renderVehiclePhotoViewer(getFilteredVehicles());
+}
+
+function onDrawerItemSelectionChange() {
+  vehicleViewerState.activeDrawerItemIndex = Number(vehicleDrawerItemSelect.value || 0);
+  renderVehiclePhotoViewer(getFilteredVehicles());
+}
+
+function onDrawerPanelItemSelectionChange() {
+  vehicleViewerState.activeDrawerItemIndex = Number(vehicleDrawerPanelItemSelect.value || 0);
+  renderVehiclePhotoViewer(getFilteredVehicles());
+}
+
+function onDrawerNameInputChange() {
+  if (!permissions.canWriteVehicles) {
+    return;
+  }
+
+  const selectedVehicle = vehicles.find((vehicle) => vehicle.id === vehicleViewerState.vehicleId);
+  if (!selectedVehicle || !Array.isArray(selectedVehicle.drawerInventory) || !vehicleViewerState.activeDrawerId) {
+    return;
+  }
+
+  const drawer = selectedVehicle.drawerInventory.find((candidate) => candidate.id === vehicleViewerState.activeDrawerId);
+  if (!drawer) {
+    return;
+  }
+
+  const nombre = String(vehicleDrawerNameInput.value || "").trim();
+  drawer.nombre = nombre || drawer.id;
+  vehicleViewerState.dirtyMedia = true;
+  renderVehiclePhotoViewer(getFilteredVehicles());
+}
+
+function onCreateVehicleDrawerClick() {
+  if (!permissions.canWriteVehicles) {
+    alert("Tu rol es solo lectura. No puedes crear gavetas.");
+    return;
+  }
+
+  const selectedVehicle = vehicles.find((vehicle) => vehicle.id === vehicleViewerState.vehicleId);
+  if (!selectedVehicle) {
+    alert("Selecciona un carro para crear una gaveta.");
+    return;
+  }
+
+  if (!Array.isArray(selectedVehicle.drawerInventory)) {
+    selectedVehicle.drawerInventory = [];
+  }
+
+  const newDrawer = {
+    id: generateNextDrawerId(selectedVehicle),
+    nombre: `Nueva gaveta ${selectedVehicle.drawerInventory.length + 1}`,
+    angle: vehicleViewerState.angle || "left",
+    x: 50,
+    y: 50,
+    items: [
+      {
+        nombre: "Nuevo objeto",
+        estado: "Pendiente",
+        imagen: "logo.png",
+        descripcion: "Completa la información del item principal de esta gaveta."
+      }
+    ]
+  };
+
+  selectedVehicle.drawerInventory.push(newDrawer);
+  vehicleViewerState.activeDrawerId = newDrawer.id;
+  vehicleViewerState.activeDrawerItemIndex = 0;
+  vehicleViewerState.dirtyMedia = true;
+  renderVehiclePhotoViewer(getFilteredVehicles());
+}
+
+function onDeleteVehicleDrawerClick() {
+  if (!permissions.canWriteVehicles) {
+    alert("Tu rol es solo lectura. No puedes eliminar gavetas.");
+    return;
+  }
+
+  const selectedVehicle = vehicles.find((vehicle) => vehicle.id === vehicleViewerState.vehicleId);
+  if (!selectedVehicle || !Array.isArray(selectedVehicle.drawerInventory) || !vehicleViewerState.activeDrawerId) {
+    alert("Selecciona una gaveta para eliminar.");
+    return;
+  }
+
+  const drawer = selectedVehicle.drawerInventory.find((candidate) => candidate.id === vehicleViewerState.activeDrawerId);
+  if (!drawer) {
+    return;
+  }
+
+  const confirmDelete = confirm(`¿Eliminar la gaveta ${drawer.id} (${drawer.nombre})?`);
+  if (!confirmDelete) {
+    return;
+  }
+
+  selectedVehicle.drawerInventory = selectedVehicle.drawerInventory.filter((candidate) => candidate.id !== drawer.id);
+  vehicleViewerState.activeDrawerId = "";
+  vehicleViewerState.activeDrawerItemIndex = 0;
+  vehicleViewerState.dirtyMedia = true;
+  renderVehiclePhotoViewer(getFilteredVehicles());
+}
+
+function onCreateVehicleDrawerItemClick() {
+  if (!permissions.canWriteVehicles) {
+    alert("Tu rol es solo lectura. No puedes agregar ítems.");
+    return;
+  }
+
+  const selectedVehicle = vehicles.find((vehicle) => vehicle.id === vehicleViewerState.vehicleId);
+  if (!selectedVehicle || !Array.isArray(selectedVehicle.drawerInventory) || !vehicleViewerState.activeDrawerId) {
+    alert("Selecciona una gaveta para agregar un ítem.");
+    return;
+  }
+
+  const drawer = selectedVehicle.drawerInventory.find((candidate) => candidate.id === vehicleViewerState.activeDrawerId);
+  if (!drawer) {
+    return;
+  }
+
+  if (!Array.isArray(drawer.items)) {
+    drawer.items = normalizeDrawerItems(drawer);
+  }
+
+  drawer.items.push({
+    nombre: `Nuevo objeto ${drawer.items.length + 1}`,
+    estado: "Pendiente",
+    imagen: "logo.png",
+    descripcion: "Completa la información de este ítem."
+  });
+
+  vehicleViewerState.activeDrawerItemIndex = drawer.items.length - 1;
+  vehicleViewerState.dirtyMedia = true;
+  renderVehiclePhotoViewer(getFilteredVehicles());
+}
+
+function onDeleteVehicleDrawerItemClick() {
+  if (!permissions.canWriteVehicles) {
+    alert("Tu rol es solo lectura. No puedes eliminar ítems.");
+    return;
+  }
+
+  const selectedVehicle = vehicles.find((vehicle) => vehicle.id === vehicleViewerState.vehicleId);
+  if (!selectedVehicle || !Array.isArray(selectedVehicle.drawerInventory) || !vehicleViewerState.activeDrawerId) {
+    alert("Selecciona una gaveta para eliminar un ítem.");
+    return;
+  }
+
+  const drawer = selectedVehicle.drawerInventory.find((candidate) => candidate.id === vehicleViewerState.activeDrawerId);
+  if (!drawer) {
+    return;
+  }
+
+  if (!Array.isArray(drawer.items)) {
+    drawer.items = normalizeDrawerItems(drawer);
+  }
+
+  if (drawer.items.length <= 1) {
+    alert("Cada gaveta debe tener al menos un ítem.");
+    return;
+  }
+
+  const currentItem = drawer.items[vehicleViewerState.activeDrawerItemIndex] || drawer.items[0];
+  const confirmDelete = confirm(`¿Eliminar el ítem ${currentItem?.nombre || "seleccionado"}?`);
+  if (!confirmDelete) {
+    return;
+  }
+
+  drawer.items.splice(vehicleViewerState.activeDrawerItemIndex, 1);
+  if (vehicleViewerState.activeDrawerItemIndex >= drawer.items.length) {
+    vehicleViewerState.activeDrawerItemIndex = drawer.items.length - 1;
+  }
+
+  vehicleViewerState.dirtyMedia = true;
+  renderVehiclePhotoViewer(getFilteredVehicles());
+}
+
+function onDrawerItemInputChange() {
+  if (!permissions.canWriteVehicles) {
+    return;
+  }
+
+  const selectedVehicle = vehicles.find((vehicle) => vehicle.id === vehicleViewerState.vehicleId);
+  if (!selectedVehicle || !Array.isArray(selectedVehicle.drawerInventory) || !vehicleViewerState.activeDrawerId) {
+    return;
+  }
+
+  const drawer = selectedVehicle.drawerInventory.find((candidate) => candidate.id === vehicleViewerState.activeDrawerId);
+  if (!drawer) {
+    return;
+  }
+
+  if (!Array.isArray(drawer.items)) {
+    drawer.items = normalizeDrawerItems(drawer);
+  }
+
+  if (vehicleViewerState.activeDrawerItemIndex >= drawer.items.length) {
+    vehicleViewerState.activeDrawerItemIndex = 0;
+  }
+
+  if (!drawer.items[vehicleViewerState.activeDrawerItemIndex]) {
+    drawer.items[vehicleViewerState.activeDrawerItemIndex] = {
+      nombre: "Nuevo objeto",
+      estado: "Pendiente",
+      imagen: "logo.png",
+      descripcion: ""
+    };
+  }
+
+  const activeItem = drawer.items[vehicleViewerState.activeDrawerItemIndex];
+
+  activeItem.nombre = String(vehicleDrawerItemNameInput.value || "").trim();
+  activeItem.estado = String(vehicleDrawerItemStatusInput.value || "").trim();
+  activeItem.imagen = String(vehicleDrawerItemImageInput.value || "").trim() || "logo.png";
+  activeItem.descripcion = String(vehicleDrawerItemDescriptionInput.value || "").trim();
+  vehicleViewerState.dirtyMedia = true;
+
+  renderVehiclePhotoViewer(getFilteredVehicles());
+}
+
+function onVehicleHotspotPointerDown(event, drawerId) {
+  if (!vehicleViewerState.editMode || !permissions.canWriteVehicles) {
+    return;
+  }
+
+  event.preventDefault();
+  vehicleViewerState.draggingDrawerId = drawerId;
+  vehicleViewerState.dragActive = true;
+  vehicleViewerState.activeDrawerId = drawerId;
+
+  const target = event.currentTarget;
+  if (target && typeof target.setPointerCapture === "function") {
+    try {
+      target.setPointerCapture(event.pointerId);
+    } catch {
+      // Ignora si el navegador no permite capturar el puntero.
+    }
+  }
+}
+
+function onVehicleHotspotPointerMove(event) {
+  if (!vehicleViewerState.dragActive || !vehicleViewerState.draggingDrawerId) {
+    return;
+  }
+
+  const selectedVehicle = vehicles.find((vehicle) => vehicle.id === vehicleViewerState.vehicleId);
+  if (!selectedVehicle || !Array.isArray(selectedVehicle.drawerInventory)) {
+    return;
+  }
+
+  const drawer = selectedVehicle.drawerInventory.find((candidate) => candidate.id === vehicleViewerState.draggingDrawerId);
+  if (!drawer) {
+    return;
+  }
+
+  const bounds = vehiclePhotoStage.getBoundingClientRect();
+  if (bounds.width <= 0 || bounds.height <= 0) {
+    return;
+  }
+
+  const x = clamp(((event.clientX - bounds.left) / bounds.width) * 100, 0, 100);
+  const y = clamp(((event.clientY - bounds.top) / bounds.height) * 100, 0, 100);
+
+  drawer.x = x;
+  drawer.y = y;
+  vehicleViewerState.dirtyMedia = true;
+
+  const hotspot = vehicleHotspotsLayer.querySelector(`[data-drawer-id="${drawer.id}"]`);
+  if (hotspot) {
+    hotspot.style.left = `${x}%`;
+    hotspot.style.top = `${y}%`;
+  }
+
+  vehicleDrawerXRange.value = String(Math.round(x));
+  vehicleDrawerYRange.value = String(Math.round(y));
+  vehicleDrawerCoordsLabel.textContent = `Coordenadas de ${drawer.id}: X ${Math.round(x)}% / Y ${Math.round(y)}%`;
+}
+
+function onVehicleHotspotPointerUp() {
+  if (!vehicleViewerState.dragActive) {
+    return;
+  }
+
+  vehicleViewerState.draggingDrawerId = "";
+  vehicleViewerState.dragActive = false;
+  renderVehiclePhotoViewer(getFilteredVehicles());
+}
+
+function validateVehicleViewerData(vehicle) {
+  const errors = [];
+
+  if (!vehicle || !Array.isArray(vehicle.drawerInventory)) {
+    return ["No hay datos de gavetas para validar."];
+  }
+
+  const ids = new Set();
+  vehicle.drawerInventory.forEach((drawer) => {
+    const drawerId = String(drawer?.id || "").trim();
+    if (!drawerId) {
+      errors.push("Existe una gaveta sin identificador.");
+      return;
+    }
+
+    const key = drawerId.toLowerCase();
+    if (ids.has(key)) {
+      errors.push(`ID duplicado de gaveta: ${drawerId}.`);
+    }
+    ids.add(key);
+
+    const nombre = String(drawer?.nombre || "").trim();
+    if (!nombre) {
+      errors.push(`La gaveta ${drawerId} no tiene nombre.`);
+    }
+
+    const items = normalizeDrawerItems(drawer);
+    if (items.length < 1) {
+      errors.push(`La gaveta ${drawerId} debe tener al menos un ítem.`);
+      return;
+    }
+
+    const invalidItem = items.find((item) => {
+      const itemNombre = String(item?.nombre || "").trim();
+      const itemEstado = String(item?.estado || "").trim();
+      const itemDescripcion = String(item?.descripcion || "").trim();
+      return !itemNombre || !itemEstado || !itemDescripcion;
+    });
+
+    if (invalidItem) {
+      errors.push(`La gaveta ${drawerId} tiene un ítem incompleto (nombre, estado y descripción son obligatorios).`);
+    }
+  });
+
+  return errors;
+}
+
+function generateNextDrawerId(vehicle) {
+  const code = String(vehicle?.codigo || "CARRO").toUpperCase().replace(/\s+/g, "-");
+  const existing = new Set(
+    (Array.isArray(vehicle?.drawerInventory) ? vehicle.drawerInventory : [])
+      .map((drawer) => String(drawer?.id || "").trim().toUpperCase())
+      .filter(Boolean)
+  );
+
+  for (let i = 1; i <= 999; i += 1) {
+    const candidate = `${code}-G${String(i).padStart(2, "0")}`;
+    if (!existing.has(candidate)) {
+      return candidate;
+    }
+  }
+
+  return `${code}-G${Date.now()}`;
+}
+
+function onDrawerCoordinateRangeInput() {
+  if (!permissions.canWriteVehicles) {
+    return;
+  }
+
+  const selectedVehicle = vehicles.find((vehicle) => vehicle.id === vehicleViewerState.vehicleId);
+  if (!selectedVehicle || !Array.isArray(selectedVehicle.drawerInventory) || !vehicleViewerState.activeDrawerId) {
+    return;
+  }
+
+  const drawer = selectedVehicle.drawerInventory.find((candidate) => candidate.id === vehicleViewerState.activeDrawerId);
+  if (!drawer) {
+    return;
+  }
+
+  drawer.x = clamp(Number(vehicleDrawerXRange.value), 0, 100);
+  drawer.y = clamp(Number(vehicleDrawerYRange.value), 0, 100);
+  vehicleViewerState.dirtyMedia = true;
+  renderVehiclePhotoViewer(getFilteredVehicles());
+}
+
+function onVehiclePhotoStageClick(event) {
+  if (!vehicleViewerState.editMode || !permissions.canWriteVehicles) {
+    return;
+  }
+
+  if (!vehicleViewerState.activeDrawerId) {
+    return;
+  }
+
+  if (event.target.closest(".vehicle-hotspot")) {
+    return;
+  }
+
+  const selectedVehicle = vehicles.find((vehicle) => vehicle.id === vehicleViewerState.vehicleId);
+  if (!selectedVehicle || !Array.isArray(selectedVehicle.drawerInventory)) {
+    return;
+  }
+
+  const drawer = selectedVehicle.drawerInventory.find((candidate) => candidate.id === vehicleViewerState.activeDrawerId);
+  if (!drawer) {
+    return;
+  }
+
+  const bounds = vehiclePhotoStage.getBoundingClientRect();
+  if (bounds.width <= 0 || bounds.height <= 0) {
+    return;
+  }
+
+  const x = ((event.clientX - bounds.left) / bounds.width) * 100;
+  const y = ((event.clientY - bounds.top) / bounds.height) * 100;
+
+  drawer.x = clamp(x, 0, 100);
+  drawer.y = clamp(y, 0, 100);
+  vehicleViewerState.dirtyMedia = true;
+  renderVehiclePhotoViewer(getFilteredVehicles());
+}
+
+function onPhotoInputChange(angle, value) {
+  if (!permissions.canWriteVehicles) {
+    return;
+  }
+
+  const selectedVehicle = vehicles.find((vehicle) => vehicle.id === vehicleViewerState.vehicleId);
+  if (!selectedVehicle) {
+    return;
+  }
+
+  const gallery = ensureVehicleGallery(selectedVehicle);
+  const target = gallery.find((entry) => entry.angle === angle);
+  if (!target) {
+    return;
+  }
+
+  const trimmed = String(value || "").trim();
+  target.image = trimmed || FALLBACK_VEHICLE_PHOTO_BY_ANGLE[angle];
+  vehicleViewerState.dirtyMedia = true;
+  renderVehiclePhotoViewer(getFilteredVehicles());
+}
+
+function onPhotoFileChange(angle, inputElement) {
+  if (!permissions.canWriteVehicles) {
+    return;
+  }
+
+  const file = inputElement?.files?.[0];
+  if (!file) {
+    return;
+  }
+
+  const reader = new FileReader();
+  reader.onload = () => {
+    onPhotoInputChange(angle, String(reader.result || ""));
+    inputElement.value = "";
+  };
+  reader.onerror = () => {
+    alert("No se pudo leer el archivo de imagen seleccionado.");
+  };
+  reader.readAsDataURL(file);
+}
+
+function ensureVehicleGallery(vehicle) {
+  if (!Array.isArray(vehicle.photoGallery)) {
+    vehicle.photoGallery = [];
+  }
+
+  const required = [
+    { angle: "left", label: "Lado izquierdo", image: FALLBACK_VEHICLE_PHOTO_BY_ANGLE.left },
+    { angle: "right", label: "Lado derecho", image: FALLBACK_VEHICLE_PHOTO_BY_ANGLE.right },
+    { angle: "rear", label: "Parte trasera", image: FALLBACK_VEHICLE_PHOTO_BY_ANGLE.rear }
+  ];
+
+  required.forEach((def) => {
+    const existing = vehicle.photoGallery.find((entry) => String(entry?.angle || "").toLowerCase() === def.angle);
+    if (!existing) {
+      vehicle.photoGallery.push({ ...def });
+    } else {
+      existing.angle = def.angle;
+      existing.label = existing.label || def.label;
+      existing.image = String(existing.image || def.image).trim();
+    }
+  });
+
+  vehicle.photoGallery = vehicle.photoGallery.filter((entry) => ["left", "right", "rear"].includes(String(entry?.angle || "").toLowerCase()));
+  return vehicle.photoGallery;
+}
+
+function buildVehicleUpdatePayload(vehicle) {
+  return {
+    nombre: getVehicleDisplayName(vehicle),
+    codigo: String(vehicle.codigo || "").trim(),
+    patente: String(vehicle.patente || "").trim(),
+    marcaModelo: String(vehicle.marcaModelo || "").trim(),
+    anio: Number(vehicle.anio || 0),
+    kilometraje: Number(vehicle.kilometraje || 0),
+    estadoOperativo: String(vehicle.estadoOperativo || "").trim(),
+    ultimaMantencion: String(vehicle.ultimaMantencion || "").trim(),
+    proximaMantencionKm: Number(vehicle.proximaMantencionKm || 0),
+    revisionTecnicaVencimiento: String(vehicle.revisionTecnicaVencimiento || "").trim(),
+    observaciones: String(vehicle.observaciones || "").trim(),
+    photoGallery: ensureVehicleGallery(vehicle),
+    drawerInventory: sanitizeDrawerInventoryForSave(Array.isArray(vehicle.drawerInventory) ? vehicle.drawerInventory : [])
+  };
+}
+
+function sanitizeDrawerInventoryForSave(drawers) {
+  return drawers.map((drawer) => ({
+    id: String(drawer?.id || "").trim(),
+    nombre: String(drawer?.nombre || "").trim(),
+    angle: String(drawer?.angle || "").trim().toLowerCase(),
+    x: clamp(Number(drawer?.x), 0, 100),
+    y: clamp(Number(drawer?.y), 0, 100),
+    items: normalizeDrawerItems(drawer)
+  }));
+}
+
+async function saveVehicleViewerChanges() {
+  if (!permissions.canWriteVehicles) {
+    alert("Tu rol es solo lectura. No puedes guardar cambios del visor.");
+    return;
+  }
+
+  if (!vehicleViewerState.dirtyMedia || vehicleViewerState.isSavingMedia) {
+    return;
+  }
+
+  const selectedVehicle = vehicles.find((vehicle) => vehicle.id === vehicleViewerState.vehicleId);
+  if (!selectedVehicle) {
+    alert("No hay carro seleccionado para guardar cambios.");
+    return;
+  }
+
+  const validationErrors = validateVehicleViewerData(selectedVehicle);
+  if (validationErrors.length > 0) {
+    vehicleEditorValidation.textContent = validationErrors[0];
+    vehicleEditorValidation.classList.remove("hidden");
+    vehicleMediaStatus.textContent = `Validación: ${validationErrors[0]}`;
+    return;
+  }
+
+  vehicleEditorValidation.textContent = "";
+  vehicleEditorValidation.classList.add("hidden");
+
+  vehicleViewerState.isSavingMedia = true;
+  renderVehiclePhotoViewer(getFilteredVehicles());
+
+  try {
+    await api(`/api/vehicles/${selectedVehicle.id}`, {
+      method: "PUT",
+      body: buildVehicleUpdatePayload(selectedVehicle)
+    });
+    vehicleViewerState.dirtyMedia = false;
+    await refreshVehicles();
+  } catch (error) {
+    alert(error.message || "No se pudieron guardar las fotos y hotspots del carro.");
+  } finally {
+    vehicleViewerState.isSavingMedia = false;
+    renderVehiclePhotoViewer(getFilteredVehicles());
+  }
+}
+
+function openVehicleDrawerPanel(drawer) {
+  if (!vehicleDrawerPanel) {
+    return;
+  }
+
+  const items = Array.isArray(drawer?.items) ? drawer.items : normalizeDrawerItems(drawer);
+  if (vehicleViewerState.activeDrawerItemIndex >= items.length) {
+    vehicleViewerState.activeDrawerItemIndex = 0;
+  }
+  const activeItem = items[vehicleViewerState.activeDrawerItemIndex] || items[0];
+
+  vehicleDrawerPanel.classList.remove("hidden");
+  vehicleDrawerTitle.textContent = drawer.nombre || drawer.id;
+  vehicleDrawerItemsCount.textContent = `Items: ${items.length}`;
+  vehicleDrawerPanelItemSelect.innerHTML = "";
+  items.forEach((item, index) => {
+    const option = document.createElement("option");
+    option.value = String(index);
+    option.textContent = `${index + 1}. ${item.nombre}`;
+    vehicleDrawerPanelItemSelect.appendChild(option);
+  });
+  vehicleDrawerPanelItemSelect.value = String(vehicleViewerState.activeDrawerItemIndex);
+  vehicleDrawerStatus.textContent = `Estado: ${activeItem?.estado || "Sin estado"}`;
+  vehicleDrawerItemName.textContent = activeItem?.nombre || "Sin item asignado";
+  vehicleDrawerItemDescription.textContent = activeItem?.descripcion || "Sin descripción.";
+  vehicleDrawerItemImage.src = activeItem?.imagen || "logo.png";
+  vehicleDrawerItemImage.alt = `Imagen del objeto ${activeItem?.nombre || "sin item"}`;
+}
+
+function closeVehicleDrawerPanel() {
+  if (!vehicleDrawerPanel) {
+    return;
+  }
+
+  vehicleViewerState.activeDrawerId = "";
+  vehicleViewerState.activeDrawerItemIndex = 0;
+  vehicleDrawerPanel.classList.add("hidden");
+  vehicleDrawerTitle.textContent = "-";
+  vehicleDrawerItemsCount.textContent = "Items: 0";
+  vehicleDrawerPanelItemSelect.innerHTML = "";
+  vehicleDrawerStatus.textContent = "Estado: -";
+  vehicleDrawerItemName.textContent = "-";
+  vehicleDrawerItemDescription.textContent = "-";
+  vehicleDrawerItemImage.src = "logo.png";
+  vehicleDrawerItemImage.alt = "Imagen del objeto en la gaveta";
+}
+
+function clamp(value, min, max) {
+  if (!Number.isFinite(value)) {
+    return min;
+  }
+  return Math.max(min, Math.min(max, value));
 }
 
 function getVehicleStatusClass(status) {
@@ -2261,6 +4529,7 @@ function startEditVehicle(id) {
   }
 
   vehicleId.value = vehicle.id;
+  vehiclesForm.nombre.value = getVehicleDisplayName(vehicle);
   vehiclesForm.codigo.value = vehicle.codigo || "";
   vehiclesForm.patente.value = vehicle.patente || "";
   vehiclesForm.marcaModelo.value = vehicle.marcaModelo || "";
@@ -2314,6 +4583,7 @@ async function onVehicleSubmit(event) {
 
   const formData = new FormData(vehiclesForm);
   const payload = {
+    nombre: String(formData.get("nombre") || "").trim(),
     codigo: String(formData.get("codigo") || "").trim(),
     patente: String(formData.get("patente") || "").trim(),
     marcaModelo: String(formData.get("marcaModelo") || "").trim(),
@@ -2326,12 +4596,18 @@ async function onVehicleSubmit(event) {
     observaciones: String(formData.get("observaciones") || "").trim()
   };
 
+  const currentVehicle = vehicles.find((vehicle) => vehicle.id === vehicleId.value);
+  if (currentVehicle) {
+    payload.photoGallery = Array.isArray(currentVehicle.photoGallery) ? currentVehicle.photoGallery : [];
+    payload.drawerInventory = Array.isArray(currentVehicle.drawerInventory) ? currentVehicle.drawerInventory : [];
+  }
+
   if (!payload.proximaMantencionKm) {
     payload.proximaMantencionKm = 0;
   }
 
-  if (!payload.codigo || !payload.patente || !payload.marcaModelo || !payload.anio || !payload.estadoOperativo) {
-    alert("Completa codigo, patente, marca/modelo, año y estado operativo.");
+  if (!payload.nombre || !payload.codigo || !payload.patente || !payload.marcaModelo || !payload.anio || !payload.estadoOperativo) {
+    alert("Completa nombre, codigo, patente, marca/modelo, año y estado operativo.");
     return;
   }
 
@@ -2404,6 +4680,8 @@ function renderUniforms() {
       <td>${escapeHtml(record.actualizadoPor || "-")}</td>
       <td class="actions-cell"></td>
     `;
+
+    applyCellLabels(tr, ["Voluntario", "Prenda", "Talla", "Cantidad", "Movimiento", "Estado", "Fecha", "Vencimiento", "Alertas", "Observaciones", "Actualizado", "Por", "Acciones"]);
 
     const actions = tr.querySelector(".actions-cell");
 
