@@ -5,6 +5,7 @@ const crypto = require("crypto");
 const bcrypt = require("bcryptjs");
 const multer = require("multer");
 const PDFDocument = require("pdfkit");
+require("dotenv").config();
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -12,7 +13,11 @@ const DB_PATH = path.join(__dirname, "data", "db.json");
 const DB_BACKUP_PATH = `${DB_PATH}.bak`;
 const DB_TMP_PATH = `${DB_PATH}.tmp`;
 const DAY_ORDERS_UPLOAD_DIR = path.join(__dirname, "uploads", "day-orders");
-const MEDICAL_SECRET = process.env.MEDICAL_SECRET || "inv-cuarta-medical-default-secret-change-me";
+const MEDICAL_SECRET = String(process.env.MEDICAL_SECRET || "").trim();
+if (!MEDICAL_SECRET) {
+  console.error("Falta la variable de entorno MEDICAL_SECRET. Define un secreto robusto antes de iniciar el servidor.");
+  process.exit(1);
+}
 const MEDICAL_KEY = crypto.scryptSync(MEDICAL_SECRET, "medical-records-salt", 32);
 const BCRYPT_SALT_ROUNDS = Number(process.env.BCRYPT_SALT_ROUNDS || 10);
 const LOGIN_ATTEMPT_WINDOW_MS = Number(process.env.LOGIN_ATTEMPT_WINDOW_MS || 10 * 60 * 1000);
@@ -55,7 +60,13 @@ const sessions = new Map();
 const loginAttempts = new Map();
 
 app.use(express.json({ limit: "1mb" }));
-app.use(express.static(__dirname));
+app.use((req, res, next) => {
+  if (isBlockedPublicPath(req.path)) {
+    return res.status(404).send("Not found");
+  }
+  return next();
+});
+app.use(express.static(__dirname, { index: false, dotfiles: "ignore" }));
 
 app.post("/api/login", (req, res) => {
   const username = String(req.body?.username || "").trim().toLowerCase();
@@ -1343,6 +1354,40 @@ function registerFailedLoginAttempt(username, ip) {
 function clearLoginAttempts(username, ip) {
   const key = getLoginAttemptKey(username, ip);
   loginAttempts.delete(key);
+}
+
+function isBlockedPublicPath(requestPath) {
+  const normalizedPath = String(requestPath || "/").replaceAll("\\", "/");
+
+  if (normalizedPath === "/data" || normalizedPath.startsWith("/data/")) {
+    return true;
+  }
+
+  if (normalizedPath === "/node_modules" || normalizedPath.startsWith("/node_modules/")) {
+    return true;
+  }
+
+  if (normalizedPath === "/.git" || normalizedPath.startsWith("/.git/")) {
+    return true;
+  }
+
+  if (normalizedPath === "/uploads" || normalizedPath === "/uploads/") {
+    return true;
+  }
+
+  if (normalizedPath.startsWith("/uploads/") && !normalizedPath.startsWith("/uploads/day-orders/")) {
+    return true;
+  }
+
+  if (normalizedPath === "/server.js" || normalizedPath === "/package.json" || normalizedPath === "/package-lock.json") {
+    return true;
+  }
+
+  if (normalizedPath.endsWith(".bak") || normalizedPath.endsWith(".tmp")) {
+    return true;
+  }
+
+  return false;
 }
 
 function readDb() {

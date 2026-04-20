@@ -54,15 +54,21 @@ async function onCreateUser(event) {
   event.preventDefault();
 
   const formData = new FormData(userForm);
+  const normalizedRole = normalizeUserRoleInput(formData.get("role"));
   const payload = {
     nombre: String(formData.get("nombre") || "").trim(),
     username: String(formData.get("username") || "").trim(),
     password: String(formData.get("password") || ""),
-    role: String(formData.get("role") || "").trim()
+    role: normalizedRole
   };
 
   if (!payload.nombre || !payload.username || !payload.password || !payload.role) {
     alert("Completa todos los campos.");
+    return;
+  }
+
+  if (!["admin", "voluntario"].includes(payload.role)) {
+    alert("Rol invalido. Usa admin o voluntario.");
     return;
   }
 
@@ -107,13 +113,19 @@ function renderUsers(users) {
     roleBtn.className = "icon-btn";
     roleBtn.textContent = "Cambiar rol";
     roleBtn.addEventListener("click", async () => {
-      const nuevoRol = prompt("Nuevo rol: admin, operador o lectura", user.role);
+      const nuevoRol = prompt("Nuevo rol: admin o voluntario", user.role);
       if (!nuevoRol) {
         return;
       }
 
+      const normalizedRole = normalizeUserRoleInput(nuevoRol);
+      if (!["admin", "voluntario"].includes(normalizedRole)) {
+        alert("Rol invalido. Usa admin o voluntario.");
+        return;
+      }
+
       try {
-        await api(`/api/users/${user.id}`, { method: "PATCH", body: { role: nuevoRol.trim() } });
+        await api(`/api/users/${user.id}`, { method: "PATCH", body: { role: normalizedRole } });
         await refreshUsers();
       } catch (error) {
         alert(error.message || "No se pudo cambiar el rol.");
@@ -198,4 +210,15 @@ function escapeHtml(text) {
     .replaceAll(">", "&gt;")
     .replaceAll('"', "&quot;")
     .replaceAll("'", "&#39;");
+}
+
+function normalizeUserRoleInput(value) {
+  const normalized = String(value || "").trim().toLowerCase();
+  if (normalized === "admin") {
+    return "admin";
+  }
+  if (normalized === "voluntario" || normalized === "operador" || normalized === "lectura") {
+    return "voluntario";
+  }
+  return "";
 }
