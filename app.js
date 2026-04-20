@@ -285,6 +285,17 @@ let dayOrders = [];
 let dayOrderPdfs = [];
 let vehicles = [];
 let uniforms = [];
+const vehicleViewerState = {
+  vehicleId: "",
+  angle: "left",
+  activeDrawerId: "",
+  activeDrawerItemIndex: 0,
+  editMode: false,
+  dirtyMedia: false,
+  isSavingMedia: false,
+  dragActive: false,
+  draggingDrawerId: ""
+};
 let qrScanner = null;
 let qrScannerActive = false;
 let qrLastDecoded = "";
