@@ -11,7 +11,7 @@
       "email": "",
       "phone": "",
       "createdAt": "",
-      "lastLoginAt": "2026-04-20T18:26:51.102Z",
+      "lastLoginAt": "2026-04-20T18:45:06.490Z",
       "modulePermissions": {
         "canWriteInventory": false,
         "canWriteGuardBook": false,
@@ -144,18 +144,6 @@
       "firmadoPor": "Capitan Operativo",
       "publicado": true,
       "actualizadoEn": "2026-04-13T02:11:16.903Z",
-      "actualizadoPor": "Administrador"
-    },
-    {
-      "id": "ff4eb187-25f1-4f10-aa1e-a663c6652436",
-      "companyId": "company-1",
-      "fecha": "2026-04-15",
-      "tipo": "Disposicion",
-      "titulo": "se lo voy a meter a javier",
-      "contenido": "javier grito mucho",
-      "firmadoPor": "carlito el moreno",
-      "publicado": true,
-      "actualizadoEn": "2026-04-15T04:17:13.032Z",
       "actualizadoPor": "Administrador"
     }
   ],

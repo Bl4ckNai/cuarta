@@ -2267,6 +2267,45 @@ tbody tr:hover {
   animation: fadeUp 260ms ease both;
 }
 
+.latest-pdf-card {
+  display: grid;
+  gap: 0.55rem;
+}
+
+.latest-pdf-viewer-wrap {
+  position: relative;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  overflow: hidden;
+  min-height: 300px;
+  height: clamp(300px, 40vh, 480px);
+}
+
+.latest-pdf-viewer-wrap::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: inherit;
+}
+
+#latestDayOrderPdfFrame {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border: 0;
+  background: #0d1318;
+}
+
+[data-theme="light"] #latestDayOrderPdfFrame {
+  background: #f8fbfd;
+}
+
+#latestDayOrderPdfLink {
+  justify-self: start;
+}
+
 @media (max-width: 980px) {
   .fire-navbar .nav-link {
     border-radius: 10px;
@@ -2280,5 +2319,10 @@ tbody tr:hover {
   .feature-layout > .table-wrap,
   .feature-layout > .vehicle-photo-viewer {
     border-radius: 12px;
+  }
+
+  .latest-pdf-viewer-wrap {
+    min-height: 260px;
+    height: 46vh;
   }
 }

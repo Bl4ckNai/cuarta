@@ -4,14 +4,14 @@
       "id": "u-admin-1",
       "companyId": "company-1",
       "username": "admin",
-      "password": "bomberos123",
+      "password": "$2b$10$qMntE/dvF.9dpDZwjRIW5exDPrQCilw3BD9iBB5N8dQCAdQzorY6.",
       "nombre": "Administrador",
       "role": "admin",
       "blocked": false,
       "email": "",
       "phone": "",
       "createdAt": "",
-      "lastLoginAt": "2026-04-15T02:28:29.984Z",
+      "lastLoginAt": "2026-04-20T18:40:40.600Z",
       "modulePermissions": {
         "canWriteInventory": false,
         "canWriteGuardBook": false,
@@ -144,18 +144,6 @@
       "firmadoPor": "Capitan Operativo",
       "publicado": true,
       "actualizadoEn": "2026-04-13T02:11:16.903Z",
-      "actualizadoPor": "Administrador"
-    },
-    {
-      "id": "ff4eb187-25f1-4f10-aa1e-a663c6652436",
-      "companyId": "company-1",
-      "fecha": "2026-04-15",
-      "tipo": "Disposicion",
-      "titulo": "se lo voy a meter a javier",
-      "contenido": "javier grito mucho",
-      "firmadoPor": "carlito el moreno",
-      "publicado": true,
-      "actualizadoEn": "2026-04-15T04:17:13.032Z",
       "actualizadoPor": "Administrador"
     }
   ],

@@ -274,6 +274,12 @@ const statusClassMap = {
   "Fuera de Servicio": "status-out"
 };
 
+const FALLBACK_VEHICLE_PHOTO_BY_ANGLE = {
+  left: "assets/vehicle-gallery/truck-left.svg",
+  right: "assets/vehicle-gallery/truck-right.svg",
+  rear: "assets/vehicle-gallery/truck-rear.svg"
+};
+
 let authToken = localStorage.getItem(TOKEN_KEY) || "";
 let currentUser = null;
 let inventory = [];
@@ -783,6 +789,64 @@ function updateHomeSummary() {
   updateHomeOperationalKpis();
   updateHomeAlerts();
   updateRecentChanges();
+}
+
+function updateHomeOperationalKpis() {
+  updateStats();
+
+  if (homeVehiclesUnavailableCountEl) {
+    const unavailableVehicles = vehicles.filter((vehicle) => {
+      const status = String(vehicle?.estadoOperativo || "").trim();
+      return status !== "" && status !== "En Servicio";
+    }).length;
+    homeVehiclesUnavailableCountEl.textContent = String(unavailableVehicles);
+  }
+
+  if (homeUniformCriticalCountEl) {
+    const criticalUniforms = uniforms.filter((record) => {
+      const alertData = getUniformAlertData(record);
+      return alertData.className === "alert-high";
+    }).length;
+    homeUniformCriticalCountEl.textContent = String(criticalUniforms);
+  }
+}
+
+function renderLatestDayOrderPdf() {
+  if (!latestDayOrderPdfFrame || !latestDayOrderPdfMeta || !latestDayOrderPdfLink) {
+    return;
+  }
+
+  if (!Array.isArray(dayOrderPdfs) || dayOrderPdfs.length === 0) {
+    latestDayOrderPdfFrame.src = "";
+    latestDayOrderPdfMeta.textContent = "No hay PDF cargado todavía.";
+    latestDayOrderPdfLink.hidden = true;
+    latestDayOrderPdfLink.removeAttribute("href");
+    return;
+  }
+
+  const latestPdf = [...dayOrderPdfs].sort((a, b) => {
+    const aTime = Date.parse(String(a?.uploadedAt || "")) || 0;
+    const bTime = Date.parse(String(b?.uploadedAt || "")) || 0;
+    return bTime - aTime;
+  })[0];
+
+  const fileUrl = String(latestPdf?.fileUrl || "").trim();
+  if (!fileUrl) {
+    latestDayOrderPdfFrame.src = "";
+    latestDayOrderPdfMeta.textContent = "El último registro PDF no tiene URL válida.";
+    latestDayOrderPdfLink.hidden = true;
+    latestDayOrderPdfLink.removeAttribute("href");
+    return;
+  }
+
+  const title = String(latestPdf?.titulo || latestPdf?.originalName || "Orden del día").trim();
+  const uploadedBy = String(latestPdf?.uploadedBy || "Desconocido").trim();
+  const uploadedAt = formatDateTime(latestPdf?.uploadedAt);
+
+  latestDayOrderPdfFrame.src = fileUrl;
+  latestDayOrderPdfLink.href = fileUrl;
+  latestDayOrderPdfLink.hidden = false;
+  latestDayOrderPdfMeta.textContent = `${title} · Subido por ${uploadedBy} · ${uploadedAt}`;
 }
 
 function updateHomeAlerts() {
