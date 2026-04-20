@@ -2,15 +2,21 @@ const express = require("express");
 const fs = require("fs");
 const path = require("path");
 const crypto = require("crypto");
+const bcrypt = require("bcryptjs");
 const multer = require("multer");
 const PDFDocument = require("pdfkit");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 const DB_PATH = path.join(__dirname, "data", "db.json");
+const DB_BACKUP_PATH = `${DB_PATH}.bak`;
+const DB_TMP_PATH = `${DB_PATH}.tmp`;
 const DAY_ORDERS_UPLOAD_DIR = path.join(__dirname, "uploads", "day-orders");
 const MEDICAL_SECRET = process.env.MEDICAL_SECRET || "inv-cuarta-medical-default-secret-change-me";
 const MEDICAL_KEY = crypto.scryptSync(MEDICAL_SECRET, "medical-records-salt", 32);
+const BCRYPT_SALT_ROUNDS = Number(process.env.BCRYPT_SALT_ROUNDS || 10);
+const LOGIN_ATTEMPT_WINDOW_MS = Number(process.env.LOGIN_ATTEMPT_WINDOW_MS || 10 * 60 * 1000);
+const LOGIN_MAX_ATTEMPTS = Number(process.env.LOGIN_MAX_ATTEMPTS || 5);
 
 const dayOrdersPdfUpload = multer({
   storage: multer.diskStorage({
@@ -46,24 +52,39 @@ const dayOrdersPdfUpload = multer({
 });
 
 const sessions = new Map();
+const loginAttempts = new Map();
 
-app.use(express.json());
+app.use(express.json({ limit: "1mb" }));
 app.use(express.static(__dirname));
 
 app.post("/api/login", (req, res) => {
-  const { username, password } = req.body || {};
+  const username = String(req.body?.username || "").trim().toLowerCase();
+  const password = String(req.body?.password || "");
+  const clientIp = getClientIp(req);
   if (!username || !password) {
     return res.status(400).json({ error: "Usuario y clave son obligatorios." });
   }
 
+  if (isLoginTemporarilyBlocked(username, clientIp)) {
+    return res.status(429).json({ error: "Demasiados intentos de inicio de sesión. Intenta nuevamente en unos minutos." });
+  }
+
   const db = readDb();
-  const user = db.users.find((candidate) => candidate.username === username.trim());
-  if (!user || user.password !== password) {
+  const user = db.users.find((candidate) => String(candidate.username || "").toLowerCase() === username);
+  if (!user || !verifyPassword(password, user.password)) {
+    registerFailedLoginAttempt(username, clientIp);
     return res.status(401).json({ error: "Credenciales inválidas." });
   }
 
   if (user.blocked) {
+    registerFailedLoginAttempt(username, clientIp);
     return res.status(403).json({ error: "Usuario bloqueado. Contacta a un administrador." });
+  }
+
+  clearLoginAttempts(username, clientIp);
+
+  if (shouldUpgradePasswordHash(user.password)) {
+    user.password = hashPassword(password);
   }
 
   user.lastLoginAt = new Date().toISOString();
@@ -1029,7 +1050,7 @@ app.get("/api/users", authRequired, adminRequired, (req, res) => {
 
 app.post("/api/users", authRequired, adminRequired, (req, res) => {
   const nombre = String(req.body?.nombre || "").trim();
-  const username = String(req.body?.username || "").trim();
+  const username = String(req.body?.username || "").trim().toLowerCase();
   const password = String(req.body?.password || "");
   const role = normalizeRoleValue(req.body?.role);
   const email = sanitizeUserOptionalField(req.body?.email);
@@ -1059,7 +1080,7 @@ app.post("/api/users", authRequired, adminRequired, (req, res) => {
     companyId: req.user.companyId,
     nombre,
     username,
-    password,
+    password: hashPassword(password),
     role,
     blocked: false,
     email,
@@ -1112,7 +1133,7 @@ app.patch("/api/users/:id", authRequired, adminRequired, (req, res) => {
     if (password.length < 6) {
       return res.status(400).json({ error: "La clave debe tener al menos 6 caracteres." });
     }
-    user.password = password;
+    user.password = hashPassword(password);
   }
 
   if (req.body?.role !== undefined) {
@@ -1201,6 +1222,18 @@ app.get("/api/reports/uniforms.pdf", authRequired, (req, res) => {
   streamUniformsPdf(res, uniforms, req.user);
 });
 
+app.get("/api/health", (_req, res) => {
+  res.json({ ok: true, timestamp: new Date().toISOString() });
+});
+
+app.use((error, _req, res, next) => {
+  console.error("Error no controlado:", error);
+  if (res.headersSent) {
+    return next(error);
+  }
+  return res.status(500).json({ error: "Error interno del servidor." });
+});
+
 app.get(/.*/, (_req, res) => {
   res.sendFile(path.join(__dirname, "index.html"));
 });
@@ -1249,16 +1282,83 @@ function authRequired(req, res, next) {
 }
 
 function adminRequired(req, res, next) {
-  if (req.user.role !== "admin") {
+  if (!hasUserPermission(req.user, "canManageUsers")) {
     return res.status(403).json({ error: "Solo administradores." });
   }
   next();
 }
 
+function getClientIp(req) {
+  const forwarded = String(req.headers["x-forwarded-for"] || "").split(",")[0].trim();
+  return forwarded || req.ip || "unknown";
+}
+
+function getLoginAttemptKey(username, ip) {
+  return `${String(username || "").toLowerCase()}|${String(ip || "unknown")}`;
+}
+
+function isLoginTemporarilyBlocked(username, ip) {
+  const key = getLoginAttemptKey(username, ip);
+  const attempt = loginAttempts.get(key);
+  if (!attempt) {
+    return false;
+  }
+
+  const now = Date.now();
+  if (attempt.blockedUntil && attempt.blockedUntil > now) {
+    return true;
+  }
+
+  if (now - attempt.firstAttemptAt > LOGIN_ATTEMPT_WINDOW_MS) {
+    loginAttempts.delete(key);
+    return false;
+  }
+
+  return false;
+}
+
+function registerFailedLoginAttempt(username, ip) {
+  const key = getLoginAttemptKey(username, ip);
+  const now = Date.now();
+  const existing = loginAttempts.get(key);
+
+  if (!existing || now - existing.firstAttemptAt > LOGIN_ATTEMPT_WINDOW_MS) {
+    loginAttempts.set(key, {
+      count: 1,
+      firstAttemptAt: now,
+      blockedUntil: 0
+    });
+    return;
+  }
+
+  const nextCount = existing.count + 1;
+  const blockedUntil = nextCount >= LOGIN_MAX_ATTEMPTS ? now + LOGIN_ATTEMPT_WINDOW_MS : 0;
+  loginAttempts.set(key, {
+    count: nextCount,
+    firstAttemptAt: existing.firstAttemptAt,
+    blockedUntil
+  });
+}
+
+function clearLoginAttempts(username, ip) {
+  const key = getLoginAttemptKey(username, ip);
+  loginAttempts.delete(key);
+}
+
 function readDb() {
   ensureDb();
-  const raw = fs.readFileSync(DB_PATH, "utf-8");
-  const parsed = JSON.parse(raw);
+  let parsed;
+  try {
+    const raw = fs.readFileSync(DB_PATH, "utf-8");
+    parsed = JSON.parse(raw);
+  } catch (error) {
+    if (!fs.existsSync(DB_BACKUP_PATH)) {
+      throw error;
+    }
+    const backupRaw = fs.readFileSync(DB_BACKUP_PATH, "utf-8");
+    parsed = JSON.parse(backupRaw);
+    writeDb(parsed);
+  }
   const normalized = normalizeDb(parsed);
   if (JSON.stringify(parsed) !== JSON.stringify(normalized)) {
     writeDb(normalized);
@@ -1267,7 +1367,12 @@ function readDb() {
 }
 
 function writeDb(db) {
-  fs.writeFileSync(DB_PATH, JSON.stringify(db, null, 2), "utf-8");
+  const serialized = JSON.stringify(db, null, 2);
+  if (fs.existsSync(DB_PATH)) {
+    fs.copyFileSync(DB_PATH, DB_BACKUP_PATH);
+  }
+  fs.writeFileSync(DB_TMP_PATH, serialized, "utf-8");
+  fs.renameSync(DB_TMP_PATH, DB_PATH);
 }
 
 function ensureDb() {
@@ -1305,12 +1410,12 @@ function ensureDb() {
 
 function sanitizeItem(body) {
   const allowedStates = ["En Servicio", "En Mantenimiento", "Fuera de Servicio"];
-  const nombre = String(body.nombre || "").trim();
-  const categoria = String(body.categoria || "").trim();
-  const estado = String(body.estado || "").trim();
-  const ubicacion = String(body.ubicacion || "").trim();
-  const notas = String(body.notas || "").trim();
-  const fechaVencimiento = body.fechaVencimiento ? String(body.fechaVencimiento) : "";
+  const nombre = sanitizeTextField(body.nombre, 180);
+  const categoria = sanitizeTextField(body.categoria, 120);
+  const estado = sanitizeTextField(body.estado, 80);
+  const ubicacion = sanitizeTextField(body.ubicacion, 120);
+  const notas = sanitizeTextField(body.notas, 900);
+  const fechaVencimiento = body.fechaVencimiento ? sanitizeTextField(body.fechaVencimiento, 40) : "";
   const cantidad = Number(body.cantidad);
   const minimo = Number(body.minimo);
 
@@ -1371,6 +1476,26 @@ function canWriteUniforms(role) {
   return role === "admin" || role === "voluntario";
 }
 
+function hashPassword(password) {
+  return bcrypt.hashSync(String(password || ""), BCRYPT_SALT_ROUNDS);
+}
+
+function verifyPassword(plainPassword, storedPassword) {
+  const plain = String(plainPassword || "");
+  const stored = String(storedPassword || "");
+  if (!stored) {
+    return false;
+  }
+  if (stored.startsWith("$2")) {
+    return bcrypt.compareSync(plain, stored);
+  }
+  return plain === stored;
+}
+
+function shouldUpgradePasswordHash(storedPassword) {
+  return !String(storedPassword || "").startsWith("$2");
+}
+
 function getPermissions(role, modulePermissions = {}) {
   const isAdmin = role === "admin";
   const base = {
@@ -1415,6 +1540,7 @@ function normalizeDb(db) {
   return {
     users: safeUsers.map((user) => ({
       ...user,
+      username: String(user.username || "").trim().toLowerCase(),
       blocked: Boolean(user.blocked),
       role: normalizeRoleValue(user.role),
       email: sanitizeUserOptionalField(user.email),
@@ -1449,6 +1575,14 @@ function sanitizeUserOptionalField(value) {
   return String(value).trim();
 }
 
+function sanitizeTextField(value, maxLength = 300) {
+  const cleaned = String(value ?? "")
+    .replace(/[\u0000-\u001F\u007F]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+  return cleaned.slice(0, maxLength);
+}
+
 function normalizeModulePermissions(value) {
   const source = value && typeof value === "object" ? value : {};
   return {
@@ -1468,15 +1602,15 @@ function sanitizeUniformRecord(body) {
   const allowedMovementTypes = ["Entrega", "Devolucion"];
   const allowedGarmentStates = ["En Uso", "Disponible", "En Reparacion", "Fuera de Servicio"];
 
-  const voluntarioNombre = String(body.voluntarioNombre || "").trim();
-  const prenda = String(body.prenda || "").trim();
-  const talla = String(body.talla || "").trim();
+  const voluntarioNombre = sanitizeTextField(body.voluntarioNombre, 160);
+  const prenda = sanitizeTextField(body.prenda, 140);
+  const talla = sanitizeTextField(body.talla, 50);
   const cantidad = Number(body.cantidad);
-  const tipoMovimiento = String(body.tipoMovimiento || "").trim();
-  const estadoPrenda = String(body.estadoPrenda || "").trim();
-  const fechaMovimiento = String(body.fechaMovimiento || "").trim();
-  const fechaVencimiento = String(body.fechaVencimiento || "").trim();
-  const observaciones = String(body.observaciones || "").trim();
+  const tipoMovimiento = sanitizeTextField(body.tipoMovimiento, 40);
+  const estadoPrenda = sanitizeTextField(body.estadoPrenda, 80);
+  const fechaMovimiento = sanitizeTextField(body.fechaMovimiento, 40);
+  const fechaVencimiento = sanitizeTextField(body.fechaVencimiento, 40);
+  const observaciones = sanitizeTextField(body.observaciones, 900);
 
   if (!voluntarioNombre || !prenda || !talla || !Number.isFinite(cantidad) || !tipoMovimiento || !estadoPrenda || !fechaMovimiento) {
     return { ok: false, error: "Completa voluntario, prenda, talla, cantidad, movimiento, estado y fecha del movimiento." };
@@ -1519,17 +1653,17 @@ function sanitizeUniformRecord(body) {
 function sanitizeVehicle(body) {
   const allowedStates = ["Disponible", "En Servicio", "En Mantenimiento", "Fuera de Servicio"];
 
-  const nombre = String(body.nombre || "").trim();
-  const codigo = String(body.codigo || "").trim();
-  const patente = String(body.patente || "").trim();
-  const marcaModelo = String(body.marcaModelo || "").trim();
+  const nombre = sanitizeTextField(body.nombre, 180);
+  const codigo = sanitizeTextField(body.codigo, 80);
+  const patente = sanitizeTextField(body.patente, 50);
+  const marcaModelo = sanitizeTextField(body.marcaModelo, 180);
   const anio = Number(body.anio);
   const kilometraje = Number(body.kilometraje);
-  const estadoOperativo = String(body.estadoOperativo || "").trim();
-  const ultimaMantencion = String(body.ultimaMantencion || "").trim();
+  const estadoOperativo = sanitizeTextField(body.estadoOperativo, 80);
+  const ultimaMantencion = sanitizeTextField(body.ultimaMantencion, 40);
   const proximaMantencionKm = Number(body.proximaMantencionKm || 0);
-  const revisionTecnicaVencimiento = String(body.revisionTecnicaVencimiento || "").trim();
-  const observaciones = String(body.observaciones || "").trim();
+  const revisionTecnicaVencimiento = sanitizeTextField(body.revisionTecnicaVencimiento, 40);
+  const observaciones = sanitizeTextField(body.observaciones, 1200);
   const hasPhotoGallery = Array.isArray(body.photoGallery);
   const hasDrawerInventory = Array.isArray(body.drawerInventory);
   const photoGallery = hasPhotoGallery ? sanitizeVehiclePhotoGallery(body.photoGallery) : null;
@@ -1610,9 +1744,9 @@ function sanitizeVehiclePhotoGallery(entries) {
   }
 
   const normalized = entries.map((entry) => ({
-    angle: String(entry?.angle || "").trim().toLowerCase(),
-    label: String(entry?.label || "").trim(),
-    image: String(entry?.image || "").trim()
+    angle: sanitizeTextField(entry?.angle, 20).toLowerCase(),
+    label: sanitizeTextField(entry?.label, 80),
+    image: sanitizeTextField(entry?.image, 300)
   }));
 
   const invalid = normalized.find((entry) => !allowedAngles.includes(entry.angle) || !entry.image);
@@ -1639,9 +1773,9 @@ function sanitizeVehicleDrawerInventory(entries) {
   }
 
   const normalized = entries.map((entry) => {
-    const id = String(entry?.id || "").trim();
-    const nombre = String(entry?.nombre || "").trim();
-    const angle = String(entry?.angle || "").trim().toLowerCase();
+    const id = sanitizeTextField(entry?.id, 80);
+    const nombre = sanitizeTextField(entry?.nombre, 180);
+    const angle = sanitizeTextField(entry?.angle, 20).toLowerCase();
     const x = Number(entry?.x);
     const y = Number(entry?.y);
     const sourceItems = Array.isArray(entry?.items)
@@ -1651,10 +1785,10 @@ function sanitizeVehicleDrawerInventory(entries) {
         : [];
 
     const items = sourceItems.map((item) => ({
-      nombre: String(item?.nombre || "").trim(),
-      estado: String(item?.estado || "").trim(),
-      imagen: String(item?.imagen || "").trim() || "logo.png",
-      descripcion: String(item?.descripcion || "").trim()
+      nombre: sanitizeTextField(item?.nombre, 180),
+      estado: sanitizeTextField(item?.estado, 80),
+      imagen: sanitizeTextField(item?.imagen, 300) || "logo.png",
+      descripcion: sanitizeTextField(item?.descripcion, 900)
     }));
 
     return { id, nombre, angle, x, y, items };
@@ -1762,11 +1896,11 @@ function getDefaultVehicleDrawerInventory(vehicleCode) {
 function sanitizeDayOrder(body) {
   const tiposPermitidos = ["Disposicion", "Nombramiento", "Felicitacion", "Informacion"];
 
-  const fecha = String(body.fecha || "").trim();
-  const tipo = String(body.tipo || "").trim();
-  const titulo = String(body.titulo || "").trim();
-  const contenido = String(body.contenido || "").trim();
-  const firmadoPor = String(body.firmadoPor || "").trim();
+  const fecha = sanitizeTextField(body.fecha, 40);
+  const tipo = sanitizeTextField(body.tipo, 80);
+  const titulo = sanitizeTextField(body.titulo, 200);
+  const contenido = sanitizeTextField(body.contenido, 3000);
+  const firmadoPor = sanitizeTextField(body.firmadoPor, 160);
 
   if (!fecha || !tipo || !titulo || !contenido || !firmadoPor) {
     return { ok: false, error: "Completa fecha, tipo, titulo, contenido y firma." };
@@ -1791,12 +1925,12 @@ function sanitizeDayOrder(body) {
 }
 
 function sanitizeVolunteerCourse(body) {
-  const voluntarioNombre = String(body.voluntarioNombre || "").trim();
-  const curso = String(body.curso || "").trim();
-  const institucion = String(body.institucion || "").trim();
-  const fechaInicio = String(body.fechaInicio || "").trim();
-  const fechaFin = String(body.fechaFin || "").trim();
-  const certificacion = String(body.certificacion || "").trim();
+  const voluntarioNombre = sanitizeTextField(body.voluntarioNombre, 160);
+  const curso = sanitizeTextField(body.curso, 180);
+  const institucion = sanitizeTextField(body.institucion, 180);
+  const fechaInicio = sanitizeTextField(body.fechaInicio, 40);
+  const fechaFin = sanitizeTextField(body.fechaFin, 40);
+  const certificacion = sanitizeTextField(body.certificacion, 180);
   const horasCapacitacion = Number(body.horasCapacitacion);
 
   if (!voluntarioNombre || !curso || !institucion || !fechaInicio || !certificacion) {
@@ -1834,14 +1968,14 @@ function sanitizeVolunteerCourse(body) {
 function sanitizeMedicalRecord(body) {
   const allowedBloodGroups = ["O+", "O-", "A+", "A-", "B+", "B-", "AB+", "AB-", "Desconocido"];
 
-  const voluntarioNombre = String(body.voluntarioNombre || "").trim();
-  const grupoSanguineo = String(body.grupoSanguineo || "Desconocido").trim();
-  const alergias = String(body.alergias || "").trim();
-  const enfermedades = String(body.enfermedades || "").trim();
-  const medicamentos = String(body.medicamentos || "").trim();
-  const contactoEmergenciaNombre = String(body.contactoEmergenciaNombre || "").trim();
-  const contactoEmergenciaTelefono = String(body.contactoEmergenciaTelefono || "").trim();
-  const contactoEmergenciaRelacion = String(body.contactoEmergenciaRelacion || "").trim();
+  const voluntarioNombre = sanitizeTextField(body.voluntarioNombre, 160);
+  const grupoSanguineo = sanitizeTextField(body.grupoSanguineo || "Desconocido", 20);
+  const alergias = sanitizeTextField(body.alergias, 1000);
+  const enfermedades = sanitizeTextField(body.enfermedades, 1000);
+  const medicamentos = sanitizeTextField(body.medicamentos, 1000);
+  const contactoEmergenciaNombre = sanitizeTextField(body.contactoEmergenciaNombre, 160);
+  const contactoEmergenciaTelefono = sanitizeTextField(body.contactoEmergenciaTelefono, 60);
+  const contactoEmergenciaRelacion = sanitizeTextField(body.contactoEmergenciaRelacion, 80);
 
   if (!voluntarioNombre) {
     return { ok: false, error: "El nombre del voluntario es obligatorio." };
@@ -1909,11 +2043,11 @@ function sanitizeGuardEntry(body) {
   const allowedTurnos = ["Manana", "Tarde", "Noche"];
   const allowedTipos = ["Entrada", "Salida", "Evento", "Observacion"];
 
-  const fechaTurno = String(body.fechaTurno || "").trim();
-  const turno = String(body.turno || "").trim();
-  const tipo = String(body.tipo || "").trim();
-  const descripcion = String(body.descripcion || "").trim();
-  const recurso = String(body.recurso || "").trim();
+  const fechaTurno = sanitizeTextField(body.fechaTurno, 40);
+  const turno = sanitizeTextField(body.turno, 20);
+  const tipo = sanitizeTextField(body.tipo, 40);
+  const descripcion = sanitizeTextField(body.descripcion, 1200);
+  const recurso = sanitizeTextField(body.recurso, 200);
 
   if (!fechaTurno || !turno || !tipo || !descripcion) {
     return { ok: false, error: "Completa fecha, turno, tipo y descripción." };

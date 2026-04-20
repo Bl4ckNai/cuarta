@@ -1,4 +1,5 @@
 const TOKEN_KEY = "inventario_auth_token";
+const API_TIMEOUT_MS = 15000;
 
 const authShell = document.getElementById("authShell");
 const mainHeader = document.getElementById("mainHeader");
@@ -287,6 +288,7 @@ let uniforms = [];
 let qrScanner = null;
 let qrScannerActive = false;
 let qrLastDecoded = "";
+let authInProgress = false;
 let lastModuleState = "";
 let editingPermissionsUserId = "";
 let permissions = {
@@ -552,9 +554,15 @@ resetDayOrderForm();
 resetUniformForm();
 
 initTheme();
+initGlobalErrorHandling();
+runStartupHealthCheck();
 bootstrap();
 
 async function bootstrap() {
+  if (authInProgress) {
+    return;
+  }
+
   if (!authToken) {
     showAuthScreen();
     return;
@@ -564,14 +572,7 @@ async function bootstrap() {
     const me = await api("/api/me");
     currentUser = me.user;
     permissions = me.permissions || permissions;
-    await refreshInventory();
-    await refreshGuardBook();
-    await refreshMedicalRecords();
-    await refreshCourses();
-    await refreshDayOrders();
-    await refreshDayOrderPdfs();
-    await refreshVehicles();
-    await refreshUniforms();
+    await loadInitialModules();
     showAppScreen();
   } catch {
     localStorage.removeItem(TOKEN_KEY);
@@ -582,6 +583,10 @@ async function bootstrap() {
 
 async function onLogin(event) {
   event.preventDefault();
+  if (authInProgress) {
+    return;
+  }
+
   authError.classList.add("hidden");
   authError.textContent = "";
 
@@ -594,6 +599,7 @@ async function onLogin(event) {
     return;
   }
 
+  setAuthBusy(true);
   try {
     const response = await api("/api/login", {
       method: "POST",
@@ -609,17 +615,45 @@ async function onLogin(event) {
     const me = await api("/api/me");
     permissions = me.permissions || permissions;
 
-    await refreshInventory();
-    await refreshGuardBook();
-    await refreshMedicalRecords();
-    await refreshCourses();
-    await refreshDayOrders();
-    await refreshDayOrderPdfs();
-    await refreshVehicles();
-    await refreshUniforms();
+    await loadInitialModules();
     showAppScreen();
   } catch (error) {
     showAuthError(error.message || "No se pudo iniciar sesión.");
+  } finally {
+    setAuthBusy(false);
+  }
+}
+
+function setAuthBusy(isBusy) {
+  authInProgress = Boolean(isBusy);
+  const submitBtn = loginForm?.querySelector('button[type="submit"]');
+  if (!submitBtn) {
+    return;
+  }
+  submitBtn.disabled = authInProgress;
+  submitBtn.textContent = authInProgress ? "Ingresando..." : "Iniciar sesión";
+}
+
+async function loadInitialModules() {
+  const loaders = [
+    ["Inventario", refreshInventory],
+    ["Libro de Guardia", refreshGuardBook],
+    ["Fichas Médicas", refreshMedicalRecords],
+    ["Cursos", refreshCourses],
+    ["Órdenes del Día", refreshDayOrders],
+    ["PDF de Órdenes", refreshDayOrderPdfs],
+    ["Carros", refreshVehicles],
+    ["Uniformes", refreshUniforms]
+  ];
+
+  const results = await Promise.allSettled(loaders.map(([, load]) => load()));
+  const failedModules = results
+    .map((result, index) => ({ result, name: loaders[index][0] }))
+    .filter((item) => item.result.status === "rejected")
+    .map((item) => item.name);
+
+  if (failedModules.length > 0) {
+    showToast(`Se cargó parcialmente. Fallaron: ${failedModules.join(", ")}.`, "warning");
   }
 }
 
@@ -1787,10 +1821,15 @@ function showAppScreen() {
   userInfoNav.textContent = userDisplayText;
   userInfoDropdown.textContent = userDisplayText;
   manageUsersBtn.classList.toggle("hidden", !permissions.canManageUsers);
-  applyPermissionState();
-  updateAutoApplySavedFiltersButton();
-  updateSavedFiltersModeIndicators();
-  loadLastModuleFromStorage();
+  try {
+    applyPermissionState();
+    updateAutoApplySavedFiltersButton();
+    updateSavedFiltersModeIndicators();
+    loadLastModuleFromStorage();
+  } catch (error) {
+    console.error("No se pudo completar la configuración inicial de la UI:", error);
+    showToast("Se detectó un problema al preparar la interfaz.", "warning");
+  }
 
   showStartMenu();
   setActiveNav(null);
@@ -1807,7 +1846,8 @@ async function api(path, options = {}) {
     method = "GET",
     body,
     headers = {},
-    requiresAuth = true
+    requiresAuth = true,
+    timeoutMs = API_TIMEOUT_MS
   } = options;
 
   const requestHeaders = {
@@ -1822,11 +1862,25 @@ async function api(path, options = {}) {
     requestHeaders.Authorization = `Bearer ${authToken}`;
   }
 
-  const response = await fetch(path, {
-    method,
-    headers: requestHeaders,
-    body: body !== undefined ? JSON.stringify(body) : undefined
-  });
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), timeoutMs);
+
+  let response;
+  try {
+    response = await fetch(path, {
+      method,
+      headers: requestHeaders,
+      body: body !== undefined ? JSON.stringify(body) : undefined,
+      signal: controller.signal
+    });
+  } catch (error) {
+    if (error?.name === "AbortError") {
+      throw new Error("La solicitud tardó demasiado. Intenta nuevamente.");
+    }
+    throw new Error("No se pudo conectar con el servidor.");
+  } finally {
+    clearTimeout(timeout);
+  }
 
   const payload = await safeJson(response);
 
@@ -1842,6 +1896,33 @@ async function api(path, options = {}) {
   }
 
   return payload;
+}
+
+function initGlobalErrorHandling() {
+  window.addEventListener("error", (event) => {
+    const message = String(event?.message || "Error inesperado en la aplicación.").trim();
+    showToast(message, "error");
+  });
+
+  window.addEventListener("unhandledrejection", (event) => {
+    const reason = event?.reason;
+    const message = typeof reason === "string" ? reason : String(reason?.message || "Error asíncrono no controlado.");
+    showToast(message, "error");
+  });
+}
+
+function runStartupHealthCheck() {
+  const checks = [
+    ["updateHomeOperationalKpis", typeof updateHomeOperationalKpis === "function"],
+    ["renderLatestDayOrderPdf", typeof renderLatestDayOrderPdf === "function"],
+    ["vehicleViewerState", typeof vehicleViewerState === "object" && vehicleViewerState !== null],
+    ["FALLBACK_VEHICLE_PHOTO_BY_ANGLE", typeof FALLBACK_VEHICLE_PHOTO_BY_ANGLE === "object" && FALLBACK_VEHICLE_PHOTO_BY_ANGLE !== null]
+  ];
+
+  const missing = checks.filter(([, ok]) => !ok).map(([name]) => name);
+  if (missing.length > 0) {
+    showToast(`Faltan dependencias de inicio: ${missing.join(", ")}.`, "error");
+  }
 }
 
 async function openUsersModal() {
