@@ -6,6 +6,7 @@ const mainHeader = document.getElementById("mainHeader");
 const mainDashboard = document.getElementById("mainDashboard");
 const homeLanding = document.getElementById("homeLanding");
 const loginForm = document.getElementById("loginForm");
+const loginCompanySelect = document.getElementById("loginCompany");
 const authError = document.getElementById("authError");
 const userInfoNav = document.getElementById("userInfoNav");
 const userInfoDropdown = document.getElementById("userInfoDropdown");
@@ -75,8 +76,11 @@ const quickGlobalSearchBtn = document.getElementById("quickGlobalSearchBtn");
 const cancelEditBtn = document.getElementById("cancelEditBtn");
 const rowTemplate = document.getElementById("rowTemplate");
 const userForm = document.getElementById("userForm");
+const companyForm = document.getElementById("companyForm");
 const usersTableBody = document.getElementById("usersTableBody");
+const companiesTableBody = document.getElementById("companiesTableBody");
 const usersEmpty = document.getElementById("usersEmpty");
+const newCompanyIdSelect = document.getElementById("newCompanyId");
 const permissionsEditorPanel = document.getElementById("permissionsEditorPanel");
 const permissionsEditorForm = document.getElementById("permissionsEditorForm");
 const permissionsEditorTitle = document.getElementById("permissionsEditorTitle");
@@ -173,6 +177,7 @@ const uniformsTableBody = document.getElementById("uniformsTableBody");
 const uniformsSearchInput = document.getElementById("uniformsSearchInput");
 const uniformsFilterMovement = document.getElementById("uniformsFilterMovement");
 const uniformsFilterStatus = document.getElementById("uniformsFilterStatus");
+const uniformsFilterExpiry = document.getElementById("uniformsFilterExpiry");
 const uniformsEmptyState = document.getElementById("uniformsEmptyState");
 const uniformCancelEditBtn = document.getElementById("uniformCancelEditBtn");
 const inventoryModeBadge = document.getElementById("inventoryModeBadge");
@@ -208,6 +213,17 @@ const expiringCountEl = document.getElementById("expiringCount");
 const homeVehiclesUnavailableCountEl = document.getElementById("homeVehiclesUnavailableCount");
 const homeUniformCriticalCountEl = document.getElementById("homeUniformCriticalCount");
 const homeAlertsList = document.getElementById("homeAlertsList");
+const dashboardInventoryHealthValueEl = document.getElementById("dashboardInventoryHealthValue");
+const dashboardInventoryHealthBarEl = document.getElementById("dashboardInventoryHealthBar");
+const dashboardLowStockValueEl = document.getElementById("dashboardLowStockValue");
+const dashboardLowStockBarEl = document.getElementById("dashboardLowStockBar");
+const dashboardVehiclesValueEl = document.getElementById("dashboardVehiclesValue");
+const dashboardVehiclesBarEl = document.getElementById("dashboardVehiclesBar");
+const dashboardUniformsValueEl = document.getElementById("dashboardUniformsValue");
+const dashboardUniformsBarEl = document.getElementById("dashboardUniformsBar");
+const dashboardCriticalAlertsCountEl = document.getElementById("dashboardCriticalAlertsCount");
+const dashboardMediumAlertsCountEl = document.getElementById("dashboardMediumAlertsCount");
+const dashboardLastCheckEl = document.getElementById("dashboardLastCheck");
 const recentChangesList = document.getElementById("recentChangesList");
 const toastContainerEl = document.getElementById("toastContainer");
 
@@ -280,10 +296,17 @@ const FALLBACK_VEHICLE_PHOTO_BY_ANGLE = {
   rear: "assets/vehicle-gallery/truck-rear.svg"
 };
 
+const DEFAULT_COMPANIES = [
+  { id: "company-1", nombre: "Cuarta Compañía" },
+  { id: "company-3", nombre: "Tercera Compañía" },
+  { id: "company-4", nombre: "Primera Compañía" }
+];
+
 let authToken = localStorage.getItem(TOKEN_KEY) || "";
 let currentUser = null;
 let inventory = [];
 let users = [];
+let companies = [];
 let guardEntries = [];
 let medicalRecords = [];
 let volunteerCourses = [];
@@ -306,6 +329,7 @@ let qrScanner = null;
 let qrScannerActive = false;
 let qrLastDecoded = "";
 let authInProgress = false;
+let loginCompanies = [];
 let lastModuleState = "";
 let editingPermissionsUserId = "";
 let permissions = {
@@ -317,8 +341,20 @@ let permissions = {
   canWriteVehicles: false,
   canWriteUniforms: false,
   canManageUsers: false,
+  canViewUsers: false,
+  canCreateUsers: false,
+  canEditUsers: false,
+  canEditUserPermissions: false,
+  canResetUserPasswords: false,
+  canBlockUsers: false,
+  canManageCompanies: false,
   canGenerateReports: true
 };
+let autoAlertMonitorId = null;
+let autoAlertBaselineCaptured = false;
+let lastCriticalAlertFingerprint = "";
+
+const AUTO_ALERT_MONITOR_MS = 60000;
 
 // Funciones de tema (oscuro/claro)
 function initTheme() {
@@ -469,6 +505,9 @@ vehiclesModalBackdrop.addEventListener("click", () => closeVehiclesModal({ retur
 closeUniformsModalBtn.addEventListener("click", () => closeUniformsModal({ returnHome: true }));
 uniformsModalBackdrop.addEventListener("click", () => closeUniformsModal({ returnHome: true }));
 userForm.addEventListener("submit", onCreateUser);
+if (companyForm) {
+  companyForm.addEventListener("submit", onCreateCompany);
+}
 permissionsEditorForm.addEventListener("submit", onSaveUserPermissions);
 cancelPermissionsBtn.addEventListener("click", closePermissionsEditor);
 guardForm.addEventListener("submit", onGuardSubmit);
@@ -524,6 +563,9 @@ window.addEventListener("pointerup", onVehicleHotspotPointerUp);
 uniformsSearchInput.addEventListener("input", renderUniforms);
 uniformsFilterMovement.addEventListener("change", renderUniforms);
 uniformsFilterStatus.addEventListener("change", renderUniforms);
+if (uniformsFilterExpiry) {
+  uniformsFilterExpiry.addEventListener("change", renderUniforms);
+}
 uniformCancelEditBtn.addEventListener("click", resetUniformForm);
 window.addEventListener("keydown", onGlobalShortcutKeyDown);
 menuHomeBtn.addEventListener("click", (event) => {
@@ -580,6 +622,8 @@ async function bootstrap() {
     return;
   }
 
+  await ensureLoginCompaniesLoaded();
+
   if (!authToken) {
     showAuthScreen();
     return;
@@ -608,11 +652,12 @@ async function onLogin(event) {
   authError.textContent = "";
 
   const formData = new FormData(loginForm);
+  const companyId = String(formData.get("companyId") || "").trim();
   const username = String(formData.get("username") || "").trim();
   const password = String(formData.get("password") || "");
 
-  if (!username || !password) {
-    showAuthError("Debes completar usuario y clave.");
+  if (!companyId || !username || !password) {
+    showAuthError("Debes completar compañía, usuario y clave.");
     return;
   }
 
@@ -620,7 +665,7 @@ async function onLogin(event) {
   try {
     const response = await api("/api/login", {
       method: "POST",
-      body: { username, password },
+      body: { companyId, username, password },
       requiresAuth: false
     });
 
@@ -710,6 +755,13 @@ async function onLogout() {
     canWriteVehicles: false,
     canWriteUniforms: false,
     canManageUsers: false,
+    canViewUsers: false,
+    canCreateUsers: false,
+    canEditUsers: false,
+    canEditUserPermissions: false,
+    canResetUserPasswords: false,
+    canBlockUsers: false,
+    canManageCompanies: false,
     canGenerateReports: true
   };
   localStorage.removeItem(TOKEN_KEY);
@@ -786,8 +838,11 @@ async function refreshUniforms() {
 }
 
 function updateHomeSummary() {
+  const alerts = collectOperationalAlerts();
   updateHomeOperationalKpis();
-  updateHomeAlerts();
+  updateHomeAlerts(alerts);
+  updateVisualDashboard(alerts);
+  processAutomaticAlerts(alerts);
   updateRecentChanges();
 }
 
@@ -849,11 +904,7 @@ function renderLatestDayOrderPdf() {
   latestDayOrderPdfMeta.textContent = `${title} · Subido por ${uploadedBy} · ${uploadedAt}`;
 }
 
-function updateHomeAlerts() {
-  if (!homeAlertsList) {
-    return;
-  }
-
+function collectOperationalAlerts() {
   const alerts = [];
 
   inventory.forEach((item) => {
@@ -889,12 +940,31 @@ function updateHomeAlerts() {
     });
   });
 
+  volunteerCourses.forEach((course) => {
+    const certAlert = getCertificationAlertData(course);
+    if (certAlert.className === "alert-none") {
+      return;
+    }
+    alerts.push({
+      level: certAlert.className === "alert-high" ? "high" : "medium",
+      text: `Certificación: ${course.certificacion} (${course.voluntarioNombre}) - ${certAlert.label}`
+    });
+  });
+
   alerts.sort((a, b) => {
     if (a.level === b.level) {
       return 0;
     }
     return a.level === "high" ? -1 : 1;
   });
+
+  return alerts;
+}
+
+function updateHomeAlerts(alerts = collectOperationalAlerts()) {
+  if (!homeAlertsList) {
+    return;
+  }
 
   homeAlertsList.innerHTML = "";
 
@@ -912,6 +982,121 @@ function updateHomeAlerts() {
     li.textContent = alert.text;
     homeAlertsList.appendChild(li);
   });
+}
+
+function updateVisualDashboard(alerts = collectOperationalAlerts()) {
+  const hasDashboard =
+    dashboardInventoryHealthValueEl &&
+    dashboardInventoryHealthBarEl &&
+    dashboardLowStockValueEl &&
+    dashboardLowStockBarEl &&
+    dashboardVehiclesValueEl &&
+    dashboardVehiclesBarEl &&
+    dashboardUniformsValueEl &&
+    dashboardUniformsBarEl &&
+    dashboardCriticalAlertsCountEl &&
+    dashboardMediumAlertsCountEl;
+
+  if (!hasDashboard) {
+    return;
+  }
+
+  const inventoryTotal = inventory.length;
+  const inService = inventory.filter((item) => item.estado === "En Servicio").length;
+  const lowStockCount = inventory.filter((item) => item.cantidad <= item.minimo).length;
+  const vehiclesTotal = vehicles.length;
+  const unavailableVehicles = vehicles.filter((vehicle) => {
+    const status = String(vehicle?.estadoOperativo || "").trim();
+    return status !== "" && status !== "En Servicio";
+  }).length;
+  const uniformsTotal = uniforms.length;
+  const criticalUniforms = uniforms.filter((record) => getUniformAlertData(record).className === "alert-high").length;
+
+  const inventoryHealthRatio = inventoryTotal > 0 ? Math.round((inService / inventoryTotal) * 100) : 0;
+  const lowStockRatio = inventoryTotal > 0 ? Math.round((lowStockCount / inventoryTotal) * 100) : 0;
+  const vehiclesUnavailableRatio = vehiclesTotal > 0 ? Math.round((unavailableVehicles / vehiclesTotal) * 100) : 0;
+  const uniformsCriticalRatio = uniformsTotal > 0 ? Math.round((criticalUniforms / uniformsTotal) * 100) : 0;
+
+  dashboardInventoryHealthValueEl.textContent = `${inventoryHealthRatio}% (${inService}/${inventoryTotal || 0})`;
+  dashboardInventoryHealthBarEl.style.width = `${inventoryHealthRatio}%`;
+
+  dashboardLowStockValueEl.textContent = `${lowStockCount} de ${inventoryTotal || 0}`;
+  dashboardLowStockBarEl.style.width = `${lowStockRatio}%`;
+
+  dashboardVehiclesValueEl.textContent = `${unavailableVehicles} de ${vehiclesTotal || 0}`;
+  dashboardVehiclesBarEl.style.width = `${vehiclesUnavailableRatio}%`;
+
+  dashboardUniformsValueEl.textContent = `${criticalUniforms} de ${uniformsTotal || 0}`;
+  dashboardUniformsBarEl.style.width = `${uniformsCriticalRatio}%`;
+
+  const criticalAlerts = alerts.filter((alert) => alert.level === "high").length;
+  const mediumAlerts = alerts.filter((alert) => alert.level === "medium").length;
+  dashboardCriticalAlertsCountEl.textContent = String(criticalAlerts);
+  dashboardMediumAlertsCountEl.textContent = String(mediumAlerts);
+
+  if (dashboardLastCheckEl) {
+    const now = new Date();
+    dashboardLastCheckEl.textContent = `Actualizado ${now.toLocaleTimeString("es-CL", { hour: "2-digit", minute: "2-digit" })}`;
+  }
+}
+
+function buildCriticalAlertFingerprint(alerts) {
+  return alerts
+    .filter((alert) => alert.level === "high")
+    .map((alert) => alert.text)
+    .sort((a, b) => a.localeCompare(b))
+    .join("||");
+}
+
+function processAutomaticAlerts(alerts = collectOperationalAlerts()) {
+  const criticalFingerprint = buildCriticalAlertFingerprint(alerts);
+
+  if (!autoAlertBaselineCaptured) {
+    autoAlertBaselineCaptured = true;
+    lastCriticalAlertFingerprint = criticalFingerprint;
+    return;
+  }
+
+  if (criticalFingerprint === lastCriticalAlertFingerprint) {
+    return;
+  }
+
+  const criticalAlerts = alerts.filter((alert) => alert.level === "high");
+  lastCriticalAlertFingerprint = criticalFingerprint;
+
+  if (criticalAlerts.length === 0) {
+    showToast("Alertas críticas normalizadas.", "success");
+    return;
+  }
+
+  const preview = criticalAlerts
+    .slice(0, 2)
+    .map((alert) => alert.text)
+    .join(" · ");
+
+  showToast(`Alerta automática: ${criticalAlerts.length} crítica(s). ${preview}`, "warning", {
+    actionLabel: "Ver panel",
+    onAction: () => {
+      openHomeModule();
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+  });
+}
+
+function startAutoAlertMonitor() {
+  stopAutoAlertMonitor();
+  autoAlertMonitorId = window.setInterval(() => {
+    const alerts = collectOperationalAlerts();
+    updateVisualDashboard(alerts);
+    processAutomaticAlerts(alerts);
+  }, AUTO_ALERT_MONITOR_MS);
+}
+
+function stopAutoAlertMonitor() {
+  if (autoAlertMonitorId !== null) {
+    window.clearInterval(autoAlertMonitorId);
+    autoAlertMonitorId = null;
+  }
 }
 
 function updateRecentChanges() {
@@ -1567,7 +1752,8 @@ function saveUniformsFiltersPreset() {
   saveModuleFilters("uniforms", {
     search: String(uniformsSearchInput.value || ""),
     movement: String(uniformsFilterMovement.value || "Todos"),
-    status: String(uniformsFilterStatus.value || "Todos")
+    status: String(uniformsFilterStatus.value || "Todos"),
+    expiry: String(uniformsFilterExpiry?.value || "Todos")
   }, "Uniformes");
 }
 
@@ -1583,6 +1769,9 @@ function loadUniformsFiltersPreset(options = {}) {
   uniformsSearchInput.value = String(preset.search || "");
   uniformsFilterMovement.value = String(preset.movement || "Todos");
   uniformsFilterStatus.value = String(preset.status || "Todos");
+  if (uniformsFilterExpiry) {
+    uniformsFilterExpiry.value = String(preset.expiry || "Todos");
+  }
   renderUniforms();
   return true;
 }
@@ -1596,6 +1785,9 @@ function resetUniformsFilters(options = {}) {
   uniformsSearchInput.value = "";
   uniformsFilterMovement.value = "Todos";
   uniformsFilterStatus.value = "Todos";
+  if (uniformsFilterExpiry) {
+    uniformsFilterExpiry.value = "Todos";
+  }
   renderUniforms();
   if (notify) {
     showToast("Filtros de Uniformes restablecidos.", "info");
@@ -1870,6 +2062,9 @@ function formatDate(dateText) {
 }
 
 function showAuthScreen() {
+  stopAutoAlertMonitor();
+  autoAlertBaselineCaptured = false;
+  lastCriticalAlertFingerprint = "";
   authShell.classList.remove("hidden");
   mainHeader.classList.add("hidden");
   homeLanding.classList.add("hidden");
@@ -1885,6 +2080,7 @@ function showAuthScreen() {
   closeVehiclesModal();
   closeUniformsModal();
   setActiveNav(null);
+  void ensureLoginCompaniesLoaded();
 }
 
 function showAppScreen() {
@@ -1892,7 +2088,8 @@ function showAppScreen() {
   mainHeader.classList.add("hidden");
   mainDashboard.classList.add("hidden");
   homeLanding.classList.remove("hidden");
-  const userDisplayText = `${currentUser?.nombre || "Usuario"} (${currentUser?.username || ""})`;
+  const companyLabel = String(currentUser?.companyName || currentUser?.companyId || "Sin compañía");
+  const userDisplayText = `${currentUser?.nombre || "Usuario"} (${currentUser?.username || ""}) - ${companyLabel}`;
   userInfoNav.textContent = userDisplayText;
   userInfoDropdown.textContent = userDisplayText;
   manageUsersBtn.classList.toggle("hidden", !permissions.canManageUsers);
@@ -1909,11 +2106,81 @@ function showAppScreen() {
   showStartMenu();
   setActiveNav(null);
   applyFiltersOnOpen(loadInventoryFiltersPreset, resetInventoryFilters);
+  startAutoAlertMonitor();
 }
 
 function showAuthError(message) {
   authError.textContent = message;
   authError.classList.remove("hidden");
+}
+
+async function ensureLoginCompaniesLoaded() {
+  if (!loginCompanySelect) {
+    return;
+  }
+
+  if (companies.length > 0) {
+    loginCompanies = [...companies];
+    populateLoginCompanies(loginCompanies);
+    return;
+  }
+
+  if (loginCompanies.length > 0) {
+    populateLoginCompanies(loginCompanies);
+    return;
+  }
+
+  try {
+    const response = await api("/api/public/companies", {
+      requiresAuth: false
+    });
+    loginCompanies = Array.isArray(response?.companies) ? response.companies : [];
+    companies = [...loginCompanies];
+  } catch {
+    loginCompanies = [];
+    companies = [];
+  }
+
+  if (loginCompanies.length === 0) {
+    loginCompanies = [...DEFAULT_COMPANIES];
+    companies = [...DEFAULT_COMPANIES];
+    showAuthError("No se pudo obtener compañías desde el servidor. Reinicia el servidor para usar la configuración actual.");
+  }
+
+  populateLoginCompanies(loginCompanies);
+}
+
+function populateLoginCompanies(companies) {
+  if (!loginCompanySelect) {
+    return;
+  }
+
+  const previous = String(loginCompanySelect.value || "").trim();
+  const list = Array.isArray(companies) ? companies : [];
+
+  loginCompanySelect.innerHTML = "";
+
+  const placeholder = document.createElement("option");
+  placeholder.value = "";
+  placeholder.textContent = list.length > 0 ? "Selecciona tu compañía" : "No hay compañías disponibles";
+  loginCompanySelect.appendChild(placeholder);
+
+  list.forEach((company) => {
+    const option = document.createElement("option");
+    option.value = String(company?.id || "").trim();
+    option.textContent = String(company?.nombre || company?.id || "").trim();
+    if (option.value) {
+      loginCompanySelect.appendChild(option);
+    }
+  });
+
+  if (previous && list.some((company) => String(company?.id || "") === previous)) {
+    loginCompanySelect.value = previous;
+  } else if (list.length === 1) {
+    loginCompanySelect.value = String(list[0].id || "");
+  } else {
+    loginCompanySelect.value = "";
+  }
 }
 
 async function api(path, options = {}) {
@@ -2001,11 +2268,12 @@ function runStartupHealthCheck() {
 }
 
 async function openUsersModal() {
-  if (!permissions.canManageUsers) {
+  if (!permissions.canViewUsers) {
     return;
   }
 
   try {
+    await refreshCompanies({ useAdminEndpoint: permissions.canManageCompanies });
     await refreshUsers();
     openFeatureModal(usersModal);
   } catch (error) {
@@ -2213,7 +2481,7 @@ async function onQuickGlobalSearch() {
     },
     {
       module: "Uniformes",
-      count: uniforms.filter((record) => `${record.voluntarioNombre || ""} ${record.prenda || ""} ${record.talla || ""} ${record.observaciones || ""}`.toLowerCase().includes(normalized)).length,
+      count: uniforms.filter((record) => `${record.codigoVestimenta || ""} ${record.voluntarioNombre || ""} ${record.prenda || ""} ${record.talla || ""} ${record.fechaMantencion || ""} ${record.revisionTecnicaVencimiento || ""} ${record.observaciones || ""}`.toLowerCase().includes(normalized)).length,
       run: async () => {
         await openUniformsModal();
         uniformsSearchInput.value = term;
@@ -2494,9 +2762,133 @@ async function refreshUsers() {
   renderUsers();
 }
 
+async function refreshCompanies(options = {}) {
+  const { useAdminEndpoint = false } = options;
+  const endpoint = useAdminEndpoint ? "/api/companies" : "/api/public/companies";
+  const response = await api(endpoint, {
+    requiresAuth: useAdminEndpoint
+  });
+  companies = Array.isArray(response?.companies) ? response.companies : [];
+  loginCompanies = [...companies];
+  populateCompanySelectors();
+  renderCompanies();
+}
+
+function populateCompanySelectors() {
+  if (newCompanyIdSelect) {
+    const previous = String(newCompanyIdSelect.value || "").trim();
+    newCompanyIdSelect.innerHTML = "";
+
+    const placeholder = document.createElement("option");
+    placeholder.value = "";
+    placeholder.textContent = "Selecciona compañía...";
+    newCompanyIdSelect.appendChild(placeholder);
+
+    companies.forEach((company) => {
+      const option = document.createElement("option");
+      option.value = String(company?.id || "").trim();
+      option.textContent = String(company?.nombre || company?.id || "").trim();
+      if (option.value) {
+        newCompanyIdSelect.appendChild(option);
+      }
+    });
+
+    if (previous && companies.some((company) => String(company?.id || "") === previous)) {
+      newCompanyIdSelect.value = previous;
+    } else if (currentUser?.companyId && companies.some((company) => String(company?.id || "") === String(currentUser.companyId))) {
+      newCompanyIdSelect.value = String(currentUser.companyId);
+    }
+  }
+
+  if (loginCompanySelect && !authToken) {
+    populateLoginCompanies(companies);
+  }
+}
+
+function renderCompanies() {
+  if (!companiesTableBody) {
+    return;
+  }
+
+  companiesTableBody.innerHTML = "";
+
+  companies.forEach((company) => {
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td>${escapeHtml(company.id)}</td>
+      <td>${escapeHtml(company.nombre || company.id)}</td>
+      <td class="actions-cell"></td>
+    `;
+
+    applyCellLabels(tr, ["ID", "Nombre", "Acciones"]);
+
+    const actions = tr.querySelector(".actions-cell");
+    const renameBtn = document.createElement("button");
+    renameBtn.className = "icon-btn";
+    renameBtn.textContent = "Renombrar";
+    renameBtn.disabled = !permissions.canManageCompanies;
+    renameBtn.addEventListener("click", async () => {
+      if (!permissions.canManageCompanies) {
+        alert("No tienes permisos para renombrar compañías.");
+        return;
+      }
+      const nextName = prompt("Nuevo nombre de la compañía", company.nombre || company.id);
+      if (!nextName) {
+        return;
+      }
+      try {
+        await api(`/api/companies/${encodeURIComponent(company.id)}`, {
+          method: "PATCH",
+          body: { nombre: nextName.trim() }
+        });
+        await refreshCompanies({ useAdminEndpoint: true });
+        await ensureLoginCompaniesLoaded();
+        showToast("Compañía actualizada.", "success");
+      } catch (error) {
+        alert(error.message || "No se pudo actualizar la compañía.");
+      }
+    });
+
+    actions.appendChild(renameBtn);
+    companiesTableBody.appendChild(tr);
+  });
+}
+
+async function onCreateCompany(event) {
+  event.preventDefault();
+  if (!permissions.canManageCompanies) {
+    alert("No tienes permisos para gestionar compañías.");
+    return;
+  }
+
+  const formData = new FormData(companyForm);
+  const payload = {
+    id: String(formData.get("id") || "").trim(),
+    nombre: String(formData.get("nombre") || "").trim()
+  };
+
+  if (!payload.id || !payload.nombre) {
+    alert("Completa id y nombre de la compañía.");
+    return;
+  }
+
+  try {
+    await api("/api/companies", {
+      method: "POST",
+      body: payload
+    });
+    companyForm.reset();
+    await refreshCompanies({ useAdminEndpoint: true });
+    await ensureLoginCompaniesLoaded();
+    showToast("Compañía creada correctamente.", "success");
+  } catch (error) {
+    alert(error.message || "No se pudo crear la compañía.");
+  }
+}
+
 async function onCreateUser(event) {
   event.preventDefault();
-  if (!permissions.canManageUsers) {
+  if (!permissions.canCreateUsers) {
     alert("No tienes permisos para gestionar usuarios.");
     return;
   }
@@ -2507,12 +2899,13 @@ async function onCreateUser(event) {
     username: String(formData.get("username") || "").trim(),
     password: String(formData.get("password") || ""),
     role: String(formData.get("role") || "").trim(),
+    companyId: String(formData.get("companyId") || "").trim(),
     email: String(formData.get("email") || "").trim(),
     phone: String(formData.get("phone") || "").trim(),
     modulePermissions: extractModulePermissions(formData)
   };
 
-  if (!payload.nombre || !payload.username || !payload.password || !payload.role) {
+  if (!payload.nombre || !payload.username || !payload.password || !payload.role || !payload.companyId) {
     alert("Completa todos los campos del nuevo usuario.");
     return;
   }
@@ -2533,6 +2926,7 @@ function renderUsers() {
     const permissionsSummary = formatUserPermissionsSummary(user.modulePermissions);
     const tr = document.createElement("tr");
     tr.innerHTML = `
+      <td>${escapeHtml(user.companyName || user.companyId || "-")}</td>
       <td>${escapeHtml(user.nombre)}</td>
       <td>${escapeHtml(user.username)}</td>
       <td>${escapeHtml(user.email || "-")}</td>
@@ -2544,15 +2938,19 @@ function renderUsers() {
       <td class="actions-cell"></td>
     `;
 
-    applyCellLabels(tr, ["Nombre", "Usuario", "Correo", "Telefono", "Rol", "Ultimo acceso", "Permisos", "Estado", "Acciones"]);
+    applyCellLabels(tr, ["Compañía", "Nombre", "Usuario", "Correo", "Telefono", "Rol", "Ultimo acceso", "Permisos", "Estado", "Acciones"]);
 
     const actions = tr.querySelector(".actions-cell");
 
     const toggleBtn = document.createElement("button");
     toggleBtn.className = "icon-btn";
     toggleBtn.textContent = user.blocked ? "Desbloquear" : "Bloquear";
-    toggleBtn.disabled = user.id === currentUser?.id;
+    toggleBtn.disabled = user.id === currentUser?.id || !permissions.canBlockUsers;
     toggleBtn.addEventListener("click", async () => {
+      if (!permissions.canBlockUsers) {
+        alert("No tienes permisos para bloquear usuarios.");
+        return;
+      }
       try {
         await api(`/api/users/${user.id}`, { method: "PATCH", body: { blocked: !user.blocked } });
         await refreshUsers();
@@ -2564,7 +2962,12 @@ function renderUsers() {
     const roleBtn = document.createElement("button");
     roleBtn.className = "icon-btn";
     roleBtn.textContent = "Cambiar rol";
+    roleBtn.disabled = !permissions.canEditUserPermissions;
     roleBtn.addEventListener("click", async () => {
+      if (!permissions.canEditUserPermissions) {
+        alert("No tienes permisos para cambiar roles.");
+        return;
+      }
       const nuevoRol = prompt("Nuevo rol: admin o voluntario", user.role);
       if (!nuevoRol) {
         return;
@@ -2580,7 +2983,12 @@ function renderUsers() {
     const passwordBtn = document.createElement("button");
     passwordBtn.className = "icon-btn";
     passwordBtn.textContent = "Cambiar clave";
+    passwordBtn.disabled = !permissions.canResetUserPasswords;
     passwordBtn.addEventListener("click", async () => {
+      if (!permissions.canResetUserPasswords) {
+        alert("No tienes permisos para cambiar claves.");
+        return;
+      }
       const nuevaClave = prompt(`Nueva clave para ${user.username}`);
       if (!nuevaClave) {
         return;
@@ -2596,11 +3004,38 @@ function renderUsers() {
     const permissionsBtn = document.createElement("button");
     permissionsBtn.className = "icon-btn";
     permissionsBtn.textContent = "Permisos";
+    permissionsBtn.disabled = !permissions.canEditUserPermissions;
     permissionsBtn.addEventListener("click", () => openPermissionsEditor(user));
+
+    const companyBtn = document.createElement("button");
+    companyBtn.className = "icon-btn";
+    companyBtn.textContent = "Compañía";
+    companyBtn.disabled = !permissions.canEditUserPermissions;
+    companyBtn.addEventListener("click", async () => {
+      if (!permissions.canEditUserPermissions) {
+        alert("No tienes permisos para cambiar compañía.");
+        return;
+      }
+      const available = companies.map((company) => company.id).join(", ");
+      const selected = prompt(`Compañía destino (${available})`, String(user.companyId || ""));
+      if (!selected) {
+        return;
+      }
+      try {
+        await api(`/api/users/${user.id}`, {
+          method: "PATCH",
+          body: { companyId: selected.trim() }
+        });
+        await Promise.all([refreshCompanies({ useAdminEndpoint: permissions.canManageCompanies }), refreshUsers()]);
+      } catch (error) {
+        alert(error.message || "No se pudo cambiar la compañía del usuario.");
+      }
+    });
 
     actions.appendChild(toggleBtn);
     actions.appendChild(roleBtn);
     actions.appendChild(passwordBtn);
+    actions.appendChild(companyBtn);
     actions.appendChild(permissionsBtn);
     usersTableBody.appendChild(tr);
   });
@@ -2609,6 +3044,9 @@ function renderUsers() {
 }
 
 function openPermissionsEditor(user) {
+  if (!permissions.canEditUserPermissions) {
+    return;
+  }
   editingPermissionsUserId = user.id;
   permissionsEditorTitle.textContent = `Permisos por modulo - ${user.nombre} (${user.username})`;
   setPermissionsEditorValues(user.modulePermissions || {});
@@ -2633,10 +3071,21 @@ function setPermissionsEditorValues(modulePermissions) {
   permissionsEditorForm.elements.perm_canWriteUniforms.checked = Boolean(modulePermissions.canWriteUniforms);
   permissionsEditorForm.elements.perm_canGenerateReports.checked = Boolean(modulePermissions.canGenerateReports);
   permissionsEditorForm.elements.perm_canManageUsers.checked = Boolean(modulePermissions.canManageUsers);
+  permissionsEditorForm.elements.perm_canViewUsers.checked = Boolean(modulePermissions.canViewUsers);
+  permissionsEditorForm.elements.perm_canCreateUsers.checked = Boolean(modulePermissions.canCreateUsers);
+  permissionsEditorForm.elements.perm_canEditUsers.checked = Boolean(modulePermissions.canEditUsers);
+  permissionsEditorForm.elements.perm_canEditUserPermissions.checked = Boolean(modulePermissions.canEditUserPermissions);
+  permissionsEditorForm.elements.perm_canResetUserPasswords.checked = Boolean(modulePermissions.canResetUserPasswords);
+  permissionsEditorForm.elements.perm_canBlockUsers.checked = Boolean(modulePermissions.canBlockUsers);
+  permissionsEditorForm.elements.perm_canManageCompanies.checked = Boolean(modulePermissions.canManageCompanies);
 }
 
 async function onSaveUserPermissions(event) {
   event.preventDefault();
+  if (!permissions.canEditUserPermissions) {
+    alert("No tienes permisos para editar permisos de usuario.");
+    return;
+  }
   if (!editingPermissionsUserId) {
     return;
   }
@@ -2665,7 +3114,14 @@ function extractModulePermissions(formData) {
     canWriteVehicles: formData.has("perm_canWriteVehicles"),
     canWriteUniforms: formData.has("perm_canWriteUniforms"),
     canGenerateReports: formData.has("perm_canGenerateReports"),
-    canManageUsers: formData.has("perm_canManageUsers")
+    canManageUsers: formData.has("perm_canManageUsers"),
+    canViewUsers: formData.has("perm_canViewUsers"),
+    canCreateUsers: formData.has("perm_canCreateUsers"),
+    canEditUsers: formData.has("perm_canEditUsers"),
+    canEditUserPermissions: formData.has("perm_canEditUserPermissions"),
+    canResetUserPasswords: formData.has("perm_canResetUserPasswords"),
+    canBlockUsers: formData.has("perm_canBlockUsers"),
+    canManageCompanies: formData.has("perm_canManageCompanies")
   };
 }
 
@@ -2679,7 +3135,14 @@ function formatUserPermissionsSummary(modulePermissions) {
     ["canWriteVehicles", "Carros"],
     ["canWriteUniforms", "Uniformes"],
     ["canGenerateReports", "PDF"],
-    ["canManageUsers", "Usuarios"]
+    ["canManageUsers", "Usuarios"],
+    ["canViewUsers", "Ver Usuarios"],
+    ["canCreateUsers", "Crear Usuarios"],
+    ["canEditUsers", "Editar Usuarios"],
+    ["canEditUserPermissions", "Editar Permisos"],
+    ["canResetUserPasswords", "Reset Claves"],
+    ["canBlockUsers", "Bloquear Usuarios"],
+    ["canManageCompanies", "Compañías"]
   ];
 
   const enabled = map
@@ -2778,6 +3241,31 @@ function applyPermissionState() {
 
   if (uniformsDisabled) {
     uniformCancelEditBtn.hidden = true;
+  }
+
+  if (userForm) {
+    const createUserFields = userForm.querySelectorAll("input, select, textarea, button");
+    createUserFields.forEach((field) => {
+      field.disabled = !permissions.canCreateUsers;
+    });
+  }
+
+  if (companyForm) {
+    const companyFields = companyForm.querySelectorAll("input, select, textarea, button");
+    companyFields.forEach((field) => {
+      field.disabled = !permissions.canManageCompanies;
+    });
+  }
+
+  if (permissionsEditorForm) {
+    const permissionEditorFields = permissionsEditorForm.querySelectorAll("input, select, textarea, button");
+    permissionEditorFields.forEach((field) => {
+      if (field.id === "cancelPermissionsBtn") {
+        field.disabled = false;
+        return;
+      }
+      field.disabled = !permissions.canEditUserPermissions;
+    });
   }
 }
 
@@ -3016,7 +3504,7 @@ function getFilteredCourses() {
   const term = coursesSearchInput.value.trim().toLowerCase();
 
   return volunteerCourses.filter((course) => {
-    const haystack = `${course.voluntarioNombre} ${course.curso} ${course.institucion} ${course.certificacion}`.toLowerCase();
+    const haystack = `${course.voluntarioNombre} ${course.curso} ${course.institucion} ${course.certificacion} ${course.fechaVencimientoCertificacion || ""}`.toLowerCase();
     return !term || haystack.includes(term);
   });
 }
@@ -3026,6 +3514,7 @@ function renderCourses() {
   coursesTableBody.innerHTML = "";
 
   rows.forEach((course, idx) => {
+    const certAlert = getCertificationAlertData(course);
     const tr = document.createElement("tr");
     tr.style.animationDelay = `${idx * 30}ms`;
     tr.innerHTML = `
@@ -3035,13 +3524,15 @@ function renderCourses() {
       <td>${escapeHtml(formatDate(course.fechaInicio))}</td>
       <td>${escapeHtml(formatDate(course.fechaFin))}</td>
       <td>${escapeHtml(course.certificacion)}</td>
+      <td>${escapeHtml(formatDate(course.fechaVencimientoCertificacion))}</td>
+      <td><span class="alert-pill ${certAlert.className}">${escapeHtml(certAlert.label)}</span></td>
       <td>${escapeHtml(String(course.horasCapacitacion))}</td>
       <td>${escapeHtml(formatDateTime(course.actualizadoEn))}</td>
       <td>${escapeHtml(course.actualizadoPor || "-")}</td>
       <td class="actions-cell"></td>
     `;
 
-    applyCellLabels(tr, ["Voluntario", "Curso", "Institucion", "Inicio", "Fin", "Certificacion", "Horas", "Actualizado", "Por", "Acciones"]);
+    applyCellLabels(tr, ["Voluntario", "Curso", "Institucion", "Inicio", "Fin", "Certificacion", "Vencimiento", "Estado Cert.", "Horas", "Actualizado", "Por", "Acciones"]);
 
     const actions = tr.querySelector(".actions-cell");
 
@@ -3078,6 +3569,7 @@ function startEditCourse(id) {
   coursesForm.fechaInicio.value = course.fechaInicio || "";
   coursesForm.fechaFin.value = course.fechaFin || "";
   coursesForm.certificacion.value = course.certificacion || "";
+  coursesForm.fechaVencimientoCertificacion.value = course.fechaVencimientoCertificacion || "";
   coursesForm.horasCapacitacion.value = course.horasCapacitacion || "";
 
   document.getElementById("courseSaveBtn").textContent = "Actualizar curso";
@@ -3128,6 +3620,7 @@ async function onCourseSubmit(event) {
     fechaInicio: String(formData.get("fechaInicio") || "").trim(),
     fechaFin: String(formData.get("fechaFin") || "").trim(),
     certificacion: String(formData.get("certificacion") || "").trim(),
+    fechaVencimientoCertificacion: String(formData.get("fechaVencimientoCertificacion") || "").trim(),
     horasCapacitacion: Number(formData.get("horasCapacitacion") || 0)
   };
 
@@ -3138,6 +3631,16 @@ async function onCourseSubmit(event) {
 
   if (payload.horasCapacitacion < 1) {
     alert("Las horas de capacitacion deben ser mayores o iguales a 1.");
+    return;
+  }
+
+  if (payload.fechaVencimientoCertificacion && payload.fechaVencimientoCertificacion < payload.fechaInicio) {
+    alert("El vencimiento de certificación no puede ser anterior a la fecha de inicio.");
+    return;
+  }
+
+  if (payload.fechaVencimientoCertificacion && payload.fechaFin && payload.fechaVencimientoCertificacion < payload.fechaFin) {
+    alert("El vencimiento de certificación no puede ser anterior a la fecha de fin.");
     return;
   }
 
@@ -4724,13 +5227,21 @@ function getFilteredUniforms() {
   const term = uniformsSearchInput.value.trim().toLowerCase();
   const movement = uniformsFilterMovement.value;
   const status = uniformsFilterStatus.value;
+  const expiry = uniformsFilterExpiry ? uniformsFilterExpiry.value : "Todos";
 
   return uniforms.filter((record) => {
     const matchesMovement = movement === "Todos" || record.tipoMovimiento === movement;
     const matchesStatus = status === "Todos" || record.estadoPrenda === status;
-    const haystack = `${record.voluntarioNombre || ""} ${record.prenda || ""} ${record.talla || ""} ${record.observaciones || ""}`.toLowerCase();
+    const expiryLevel = getDateAlertLevel(record.fechaVencimiento, 30);
+    const matchesExpiry =
+      expiry === "Todos" ||
+      (expiry === "Vencido" && expiryLevel === "expired") ||
+      (expiry === "PorVencer" && expiryLevel === "soon") ||
+      (expiry === "AlDia" && expiryLevel === "none" && Boolean(record.fechaVencimiento)) ||
+      (expiry === "SinFecha" && !record.fechaVencimiento);
+    const haystack = `${record.codigoVestimenta || ""} ${record.voluntarioNombre || ""} ${record.prenda || ""} ${record.talla || ""} ${record.fechaMantencion || ""} ${record.revisionTecnicaVencimiento || ""} ${record.observaciones || ""}`.toLowerCase();
     const matchesTerm = !term || haystack.includes(term);
-    return matchesMovement && matchesStatus && matchesTerm;
+    return matchesMovement && matchesStatus && matchesExpiry && matchesTerm;
   });
 }
 
@@ -4746,6 +5257,7 @@ function renderUniforms() {
       tr.classList.add("uniform-critical");
     }
     tr.innerHTML = `
+      <td>${escapeHtml(record.codigoVestimenta || "-")}</td>
       <td>${escapeHtml(record.voluntarioNombre)}</td>
       <td>${escapeHtml(record.prenda)}</td>
       <td>${escapeHtml(record.talla)}</td>
@@ -4754,6 +5266,8 @@ function renderUniforms() {
       <td class="${getUniformStatusClass(record.estadoPrenda)}">${escapeHtml(record.estadoPrenda)}</td>
       <td>${escapeHtml(formatDate(record.fechaMovimiento))}</td>
       <td>${escapeHtml(formatDate(record.fechaVencimiento))}</td>
+      <td>${escapeHtml(formatDate(record.fechaMantencion))}</td>
+      <td>${escapeHtml(formatDate(record.revisionTecnicaVencimiento))}</td>
       <td><span class="alert-pill ${alertData.className}">${escapeHtml(alertData.label)}</span></td>
       <td>${escapeHtml(record.observaciones || "-")}</td>
       <td>${escapeHtml(formatDateTime(record.actualizadoEn))}</td>
@@ -4761,7 +5275,7 @@ function renderUniforms() {
       <td class="actions-cell"></td>
     `;
 
-    applyCellLabels(tr, ["Voluntario", "Prenda", "Talla", "Cantidad", "Movimiento", "Estado", "Fecha", "Vencimiento", "Alertas", "Observaciones", "Actualizado", "Por", "Acciones"]);
+    applyCellLabels(tr, ["Codigo", "Voluntario", "Prenda", "Talla", "Cantidad", "Movimiento", "Estado", "Fecha", "Vencimiento", "Mantencion", "Revision tecnica", "Alertas", "Observaciones", "Actualizado", "Por", "Acciones"]);
 
     const actions = tr.querySelector(".actions-cell");
 
@@ -4810,6 +5324,28 @@ function getUniformAlertData(record) {
     level = "medium";
   }
 
+  const maintenanceLevel = getDateAlertLevel(record.fechaMantencion, 7);
+  if (maintenanceLevel === "expired") {
+    alerts.push("Mantencion vencida");
+    level = "high";
+  } else if (maintenanceLevel === "soon") {
+    alerts.push("Mantencion <= 7 dias");
+    if (level !== "high") {
+      level = "medium";
+    }
+  }
+
+  const reviewLevel = getDateAlertLevel(record.revisionTecnicaVencimiento, 30);
+  if (reviewLevel === "expired") {
+    alerts.push("Rev. tecnica vencida");
+    level = "high";
+  } else if (reviewLevel === "soon") {
+    alerts.push("Rev. tecnica <= 30 dias");
+    if (level !== "high") {
+      level = "medium";
+    }
+  }
+
   if (record.estadoPrenda === "Fuera de Servicio") {
     alerts.push("Estado critico");
     level = "high";
@@ -4827,6 +5363,13 @@ function getUniformAlertData(record) {
     }
   }
 
+  if (!record.fechaVencimiento) {
+    alerts.push("Sin fecha vencimiento");
+    if (level === "none") {
+      level = "medium";
+    }
+  }
+
   if (alerts.length === 0) {
     return { label: "Normal", className: "alert-none" };
   }
@@ -4837,6 +5380,24 @@ function getUniformAlertData(record) {
   };
 }
 
+function getCertificationAlertData(course) {
+  const expiryLevel = getExpirationLevel(course?.fechaVencimientoCertificacion);
+
+  if (expiryLevel === "expired") {
+    return { label: "Vencida", className: "alert-high" };
+  }
+
+  if (expiryLevel === "urgent") {
+    return { label: "Por vencer (30 dias)", className: "alert-medium" };
+  }
+
+  if (!course?.fechaVencimientoCertificacion) {
+    return { label: "Sin fecha", className: "alert-none" };
+  }
+
+  return { label: "Vigente", className: "alert-none" };
+}
+
 function startEditUniform(id) {
   const record = uniforms.find((candidate) => candidate.id === id);
   if (!record) {
@@ -4844,6 +5405,7 @@ function startEditUniform(id) {
   }
 
   uniformRecordId.value = record.id;
+  uniformsForm.codigoVestimenta.value = record.codigoVestimenta || "";
   uniformsForm.voluntarioNombre.value = record.voluntarioNombre || "";
   uniformsForm.prenda.value = record.prenda || "";
   uniformsForm.talla.value = record.talla || "";
@@ -4852,6 +5414,8 @@ function startEditUniform(id) {
   uniformsForm.estadoPrenda.value = record.estadoPrenda || "En Uso";
   uniformsForm.fechaMovimiento.value = record.fechaMovimiento || "";
   uniformsForm.fechaVencimiento.value = record.fechaVencimiento || "";
+  uniformsForm.fechaMantencion.value = record.fechaMantencion || "";
+  uniformsForm.revisionTecnicaVencimiento.value = record.revisionTecnicaVencimiento || "";
   uniformsForm.observaciones.value = record.observaciones || "";
 
   document.getElementById("uniformSaveBtn").textContent = "Actualizar movimiento";
@@ -4896,19 +5460,32 @@ async function onUniformSubmit(event) {
 
   const formData = new FormData(uniformsForm);
   const payload = {
+    codigoVestimenta: String(formData.get("codigoVestimenta") || "").trim().toUpperCase(),
     voluntarioNombre: String(formData.get("voluntarioNombre") || "").trim(),
     prenda: String(formData.get("prenda") || "").trim(),
-    talla: String(formData.get("talla") || "").trim(),
+    talla: String(formData.get("talla") || "").trim().toUpperCase(),
     cantidad: Number(formData.get("cantidad") || 0),
     tipoMovimiento: String(formData.get("tipoMovimiento") || "").trim(),
     estadoPrenda: String(formData.get("estadoPrenda") || "").trim(),
     fechaMovimiento: String(formData.get("fechaMovimiento") || "").trim(),
     fechaVencimiento: String(formData.get("fechaVencimiento") || "").trim(),
+    fechaMantencion: String(formData.get("fechaMantencion") || "").trim(),
+    revisionTecnicaVencimiento: String(formData.get("revisionTecnicaVencimiento") || "").trim(),
     observaciones: String(formData.get("observaciones") || "").trim()
   };
 
-  if (!payload.voluntarioNombre || !payload.prenda || !payload.talla || payload.cantidad < 1 || !payload.tipoMovimiento || !payload.estadoPrenda || !payload.fechaMovimiento) {
-    alert("Completa voluntario, prenda, talla, cantidad, movimiento, estado y fecha del movimiento.");
+  if (!payload.codigoVestimenta || !payload.voluntarioNombre || !payload.prenda || !payload.talla || payload.cantidad < 1 || !payload.tipoMovimiento || !payload.estadoPrenda || !payload.fechaMovimiento) {
+    alert("Completa codigo, voluntario, prenda, talla, cantidad, movimiento, estado y fecha del movimiento.");
+    return;
+  }
+
+  if (payload.tipoMovimiento === "Entrega" && !payload.fechaVencimiento) {
+    alert("Para una entrega debes registrar fecha de vencimiento.");
+    return;
+  }
+
+  if (payload.estadoPrenda === "En Reparacion" && !payload.fechaMantencion) {
+    alert("Si la prenda esta en reparacion debes registrar la fecha de mantencion.");
     return;
   }
 
@@ -4936,9 +5513,12 @@ async function onUniformSubmit(event) {
 function resetUniformForm() {
   uniformsForm.reset();
   uniformRecordId.value = "";
+  uniformsForm.codigoVestimenta.value = "";
   uniformsForm.tipoMovimiento.value = "Entrega";
   uniformsForm.estadoPrenda.value = "En Uso";
   uniformsForm.fechaMovimiento.value = new Date().toISOString().slice(0, 10);
+  uniformsForm.fechaMantencion.value = "";
+  uniformsForm.revisionTecnicaVencimiento.value = "";
   document.getElementById("uniformSaveBtn").textContent = "Guardar movimiento";
   uniformCancelEditBtn.hidden = true;
 }

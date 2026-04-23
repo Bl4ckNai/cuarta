@@ -77,6 +77,11 @@
       <h2>Ingreso de Personal</h2>
       <p class="auth-help">Usa tu usuario y clave para acceder al inventario compartido de la compañía.</p>
       <form id="loginForm" class="login-form">
+        <label for="loginCompany">Compañía</label>
+        <select id="loginCompany" name="companyId" required>
+          <option value="">Cargando compañías...</option>
+        </select>
+
         <label for="loginUsername">Usuario</label>
         <input id="loginUsername" name="username" type="text" required placeholder="admin" />
 
@@ -85,7 +90,7 @@
 
         <button type="submit" class="btn btn-primary">Iniciar sesión</button>
       </form>
-      <p class="hint">Credenciales iniciales: usuario admin, clave bomberos123</p>
+      <p class="hint">Selecciona tu compañía antes de iniciar sesión.</p>
       <p id="authError" class="auth-error hidden"></p>
     </div>
   </section>
@@ -178,6 +183,60 @@
             </div>
           </li>
         </ul>
+      </article>
+
+      <article class="home-card visual-dashboard-card" aria-label="Dashboard visual operativo">
+        <div class="visual-dashboard-header">
+          <h3>Dashboard Visual</h3>
+          <p id="dashboardLastCheck" class="visual-dashboard-time">Actualizado --:--</p>
+        </div>
+
+        <div class="visual-metrics-grid">
+          <div class="visual-metric-item">
+            <div class="visual-metric-top">
+              <span>Salud de inventario</span>
+              <strong id="dashboardInventoryHealthValue">0% (0/0)</strong>
+            </div>
+            <div class="visual-track visual-track-ok">
+              <span id="dashboardInventoryHealthBar" class="visual-fill"></span>
+            </div>
+          </div>
+
+          <div class="visual-metric-item">
+            <div class="visual-metric-top">
+              <span>Stock bajo</span>
+              <strong id="dashboardLowStockValue">0 de 0</strong>
+            </div>
+            <div class="visual-track visual-track-warn">
+              <span id="dashboardLowStockBar" class="visual-fill"></span>
+            </div>
+          </div>
+
+          <div class="visual-metric-item">
+            <div class="visual-metric-top">
+              <span>Carros no disponibles</span>
+              <strong id="dashboardVehiclesValue">0 de 0</strong>
+            </div>
+            <div class="visual-track visual-track-danger">
+              <span id="dashboardVehiclesBar" class="visual-fill"></span>
+            </div>
+          </div>
+
+          <div class="visual-metric-item">
+            <div class="visual-metric-top">
+              <span>Uniformes críticos</span>
+              <strong id="dashboardUniformsValue">0 de 0</strong>
+            </div>
+            <div class="visual-track visual-track-danger">
+              <span id="dashboardUniformsBar" class="visual-fill"></span>
+            </div>
+          </div>
+        </div>
+
+        <div class="visual-alert-summary" aria-live="polite">
+          <p><span id="dashboardCriticalAlertsCount">0</span> alertas críticas</p>
+          <p><span id="dashboardMediumAlertsCount">0</span> alertas medias</p>
+        </div>
       </article>
 
       <article class="home-card latest-pdf-card">
@@ -327,9 +386,17 @@
             </select>
           </div>
           <div>
+            <label for="newCompanyId">Compañía</label>
+            <select id="newCompanyId" name="companyId" required>
+              <option value="">Selecciona compañía...</option>
+            </select>
+          </div>
+          <div>
             <label for="newEmail">Correo</label>
             <input id="newEmail" name="email" type="email" placeholder="usuario@compania.org" />
           </div>
+        </div>
+        <div class="grid-3">
           <div>
             <label for="newPhone">Telefono</label>
             <input id="newPhone" name="phone" type="text" placeholder="Ej: +54 9 11 1234 5678" />
@@ -346,6 +413,13 @@
           <label><input type="checkbox" name="perm_canWriteUniforms" checked /> Uniformes</label>
           <label><input type="checkbox" name="perm_canGenerateReports" checked /> Reportes PDF</label>
           <label><input type="checkbox" name="perm_canManageUsers" /> Gestion de Usuarios</label>
+          <label><input type="checkbox" name="perm_canViewUsers" /> Ver usuarios</label>
+          <label><input type="checkbox" name="perm_canCreateUsers" /> Crear usuarios</label>
+          <label><input type="checkbox" name="perm_canEditUsers" /> Editar usuarios</label>
+          <label><input type="checkbox" name="perm_canEditUserPermissions" /> Editar permisos</label>
+          <label><input type="checkbox" name="perm_canResetUserPasswords" /> Restablecer claves</label>
+          <label><input type="checkbox" name="perm_canBlockUsers" /> Bloquear usuarios</label>
+          <label><input type="checkbox" name="perm_canManageCompanies" /> Gestionar compañías</label>
         </div>
 
         <div class="grid-3">
@@ -359,6 +433,7 @@
         <table>
           <thead>
             <tr>
+              <th>Compañía</th>
               <th>Nombre</th>
               <th>Usuario</th>
               <th>Correo</th>
@@ -373,6 +448,39 @@
           <tbody id="usersTableBody"></tbody>
         </table>
       </div>
+
+      <section class="permissions-editor panel" aria-live="polite">
+        <div class="table-header">
+          <h4>Compañías</h4>
+        </div>
+        <form id="companyForm" class="user-form">
+          <div class="grid-3">
+            <div>
+              <label for="companyIdInput">ID Compañía</label>
+              <input id="companyIdInput" name="id" type="text" required placeholder="Ej: company-3" />
+            </div>
+            <div>
+              <label for="companyNameInput">Nombre</label>
+              <input id="companyNameInput" name="nombre" type="text" required placeholder="Ej: Tercera Compañía" />
+            </div>
+            <div class="user-actions-wrap">
+              <button type="submit" class="btn btn-primary">Crear compañía</button>
+            </div>
+          </div>
+        </form>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Nombre</th>
+                <th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody id="companiesTableBody"></tbody>
+          </table>
+        </div>
+      </section>
 
       <section id="permissionsEditorPanel" class="permissions-editor panel hidden" aria-live="polite">
         <div class="table-header">
@@ -389,6 +497,13 @@
             <label><input type="checkbox" name="perm_canWriteUniforms" /> Uniformes</label>
             <label><input type="checkbox" name="perm_canGenerateReports" /> Reportes PDF</label>
             <label><input type="checkbox" name="perm_canManageUsers" /> Gestion de Usuarios</label>
+            <label><input type="checkbox" name="perm_canViewUsers" /> Ver usuarios</label>
+            <label><input type="checkbox" name="perm_canCreateUsers" /> Crear usuarios</label>
+            <label><input type="checkbox" name="perm_canEditUsers" /> Editar usuarios</label>
+            <label><input type="checkbox" name="perm_canEditUserPermissions" /> Editar permisos</label>
+            <label><input type="checkbox" name="perm_canResetUserPasswords" /> Restablecer claves</label>
+            <label><input type="checkbox" name="perm_canBlockUsers" /> Bloquear usuarios</label>
+            <label><input type="checkbox" name="perm_canManageCompanies" /> Gestionar compañías</label>
           </div>
           <div class="form-actions">
             <button id="savePermissionsBtn" type="submit" class="btn btn-primary">Guardar permisos</button>
@@ -458,6 +573,32 @@
             <input id="guardRecurso" name="recurso" type="text" placeholder="Ej: Móvil R-2" />
           </div>
         </div>
+        <div class="grid-4">
+          <div>
+            <label for="guardHoraInicio">Hora inicio</label>
+            <input id="guardHoraInicio" name="horaInicio" type="time" />
+          </div>
+          <div>
+            <label for="guardHoraFin">Hora termino</label>
+            <input id="guardHoraFin" name="horaFin" type="time" />
+          </div>
+          <div>
+            <label for="guardNotificarAntes">Aviso previo</label>
+            <select id="guardNotificarAntes" name="notificarAntesMinutos">
+              <option value="15">15 min antes</option>
+              <option value="30">30 min antes</option>
+              <option value="60" selected>60 min antes</option>
+              <option value="120">120 min antes</option>
+            </select>
+          </div>
+          <div>
+            <label for="guardNotificar">Notificar</label>
+            <select id="guardNotificar" name="notificar">
+              <option value="true" selected>Sí</option>
+              <option value="false">No</option>
+            </select>
+          </div>
+        </div>
         <label for="guardDescripcion">Descripción de la novedad</label>
         <textarea id="guardDescripcion" name="descripcion" rows="3" required placeholder="Detalle de evento, observación, entrada o salida..."></textarea>
         <div class="form-actions">
@@ -472,6 +613,8 @@
               <th>Fecha</th>
               <th>Turno</th>
               <th>Tipo</th>
+              <th>Horario</th>
+              <th>Notificación</th>
               <th>Recurso</th>
               <th>Descripción</th>
               <th>Autor</th>
@@ -633,6 +776,10 @@
             <input id="courseCertification" name="certificacion" type="text" required placeholder="Ej: Certificado Nivel I" />
           </div>
           <div>
+            <label for="courseCertificationExpiry">Vencimiento certificacion</label>
+            <input id="courseCertificationExpiry" name="fechaVencimientoCertificacion" type="date" />
+          </div>
+          <div>
             <label for="courseHours">Horas de capacitacion</label>
             <input id="courseHours" name="horasCapacitacion" type="number" min="1" required placeholder="Ej: 40" />
           </div>
@@ -654,6 +801,8 @@
               <th>Inicio</th>
               <th>Fin</th>
               <th>Certificacion</th>
+              <th>Vencimiento</th>
+              <th>Estado Cert.</th>
               <th>Horas</th>
               <th>Actualizado</th>
               <th>Por</th>
@@ -1043,8 +1192,8 @@
          <button id="closeUniformsModalBtn" class="btn btn-secondary" type="button">Cerrar</button>
        </div>
 
-       <div class="table-controls uniforms-controls">
-         <input id="uniformsSearchInput" type="search" placeholder="Buscar por voluntario, prenda, talla o observaciones..." />
+      <div class="table-controls uniforms-controls">
+        <input id="uniformsSearchInput" type="search" placeholder="Buscar por codigo, voluntario, prenda, talla u observaciones..." />
          <select id="uniformsFilterMovement" aria-label="Filtrar por movimiento">
            <option value="Todos">Todos los movimientos</option>
            <option value="Entrega">Entrega</option>
@@ -1057,6 +1206,13 @@
            <option value="En Reparacion">En Reparacion</option>
            <option value="Fuera de Servicio">Fuera de Servicio</option>
          </select>
+        <select id="uniformsFilterExpiry" aria-label="Filtrar por vencimiento">
+          <option value="Todos">Todos los vencimientos</option>
+          <option value="AlDia">Al dia</option>
+          <option value="PorVencer">Vence en 30 dias</option>
+          <option value="Vencido">Vencido</option>
+          <option value="SinFecha">Sin fecha</option>
+        </select>
          <button id="reportUniformsBtn" class="btn btn-secondary" type="button">PDF Uniformes</button>
          <button id="saveUniformsFiltersBtn" class="btn btn-secondary" type="button">Guardar filtros</button>
          <button id="loadUniformsFiltersBtn" class="btn btn-secondary" type="button">Cargar filtros</button>
@@ -1068,6 +1224,10 @@
 
          <div class="grid-3">
            <div>
+              <label for="uniformCode">Codigo vestimenta</label>
+              <input id="uniformCode" name="codigoVestimenta" type="text" required maxlength="30" placeholder="Ej: UNI-CHA-001" />
+            </div>
+            <div>
              <label for="uniformVolunteerName">Voluntario</label>
              <input id="uniformVolunteerName" name="voluntarioNombre" type="text" required placeholder="Nombre completo" />
            </div>
@@ -1077,9 +1237,28 @@
            </div>
            <div>
              <label for="uniformSize">Talla</label>
-             <input id="uniformSize" name="talla" type="text" required placeholder="Ej: M, L, 42" />
+            <input id="uniformSize" name="talla" type="text" list="uniformSizeOptions" required placeholder="Ej: M, L, 42" />
            </div>
          </div>
+
+        <datalist id="uniformSizeOptions">
+          <option value="XS"></option>
+          <option value="S"></option>
+          <option value="M"></option>
+          <option value="L"></option>
+          <option value="XL"></option>
+          <option value="XXL"></option>
+          <option value="34"></option>
+          <option value="36"></option>
+          <option value="38"></option>
+          <option value="40"></option>
+          <option value="42"></option>
+          <option value="44"></option>
+          <option value="46"></option>
+          <option value="48"></option>
+          <option value="50"></option>
+          <option value="UNICA"></option>
+        </datalist>
 
          <div class="grid-4">
            <div>
@@ -1108,10 +1287,18 @@
            </div>
          </div>
 
-         <div class="grid-2">
+         <div class="grid-3">
            <div>
              <label for="uniformExpirationDate">Fecha vencimiento (opcional)</label>
              <input id="uniformExpirationDate" name="fechaVencimiento" type="date" />
+           </div>
+           <div>
+             <label for="uniformMaintenanceDate">Proxima mantencion (opcional)</label>
+             <input id="uniformMaintenanceDate" name="fechaMantencion" type="date" />
+           </div>
+           <div>
+             <label for="uniformTechnicalReviewDate">Revision tecnica (opcional)</label>
+             <input id="uniformTechnicalReviewDate" name="revisionTecnicaVencimiento" type="date" />
            </div>
          </div>
 
@@ -1128,6 +1315,7 @@
          <table>
            <thead>
              <tr>
+              <th>Codigo</th>
                <th>Voluntario</th>
                <th>Prenda</th>
                <th>Talla</th>
@@ -1136,6 +1324,8 @@
                <th>Estado</th>
                <th>Fecha mov.</th>
                <th>Vencimiento</th>
+               <th>Mantencion</th>
+               <th>Rev. tecnica</th>
                <th>Alertas</th>
                <th>Observaciones</th>
                <th>Actualizado</th>

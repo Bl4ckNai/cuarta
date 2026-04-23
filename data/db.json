@@ -1,4 +1,18 @@
 {
+  "companies": [
+    {
+      "id": "company-1",
+      "nombre": "company-1"
+    },
+    {
+      "id": "company-3",
+      "nombre": "company-3"
+    },
+    {
+      "id": "company-4",
+      "nombre": "cuarta"
+    }
+  ],
   "users": [
     {
       "id": "u-admin-1",
@@ -11,7 +25,7 @@
       "email": "",
       "phone": "",
       "createdAt": "",
-      "lastLoginAt": "2026-04-20T18:45:06.490Z",
+      "lastLoginAt": "2026-04-23T20:51:40.240Z",
       "modulePermissions": {
         "canWriteInventory": false,
         "canWriteGuardBook": false,
@@ -26,7 +40,7 @@
     },
     {
       "id": "8b57752e-df9c-4cd6-9f60-c62b8c326442",
-      "companyId": "company-1",
+      "companyId": "company-3",
       "nombre": "Operador Prueba",
       "username": "oper1",
       "password": "hola123",
@@ -50,7 +64,7 @@
     },
     {
       "id": "a6cb51bc-9be4-4272-9a15-ee75b8bd92e7",
-      "companyId": "company-1",
+      "companyId": "company-3",
       "nombre": "Vol Test",
       "username": "vol_test_62794",
       "password": "clave123",
@@ -71,6 +85,30 @@
         "canGenerateReports": true,
         "canManageUsers": false
       }
+    },
+    {
+      "id": "ca90a16d-819f-4cd9-b35e-39a998ea831d",
+      "companyId": "company-4",
+      "nombre": "admin",
+      "username": "admin",
+      "password": "$2b$10$PONq10r69XeVBUA6yVQgk.H1yr80mHOkCzcYZL4oWxmC0fO8dg4Ju",
+      "role": "admin",
+      "blocked": false,
+      "email": "tlauriem@gmail.com",
+      "phone": "934036439",
+      "createdAt": "2026-04-23T20:53:06.879Z",
+      "lastLoginAt": "2026-04-23T20:53:18.665Z",
+      "modulePermissions": {
+        "canWriteInventory": true,
+        "canWriteGuardBook": true,
+        "canWriteMedicalRecords": true,
+        "canWriteVolunteerCourses": true,
+        "canWriteDayOrders": true,
+        "canWriteVehicles": true,
+        "canWriteUniforms": true,
+        "canGenerateReports": true,
+        "canManageUsers": false
+      }
     }
   ],
   "inventory": [
@@ -86,6 +124,32 @@
       "notas": "Reponer vendas estériles.",
       "fechaVencimiento": "2026-05-20",
       "actualizado": "2026-04-12T12:00:00.000Z"
+    },
+    {
+      "id": "bf89e6de-786e-41b2-b913-029f670df4f6",
+      "companyId": "company-1",
+      "nombre": "test",
+      "categoria": "Herramientas",
+      "cantidad": 1,
+      "minimo": 2,
+      "estado": "En Servicio",
+      "ubicacion": "bodega",
+      "notas": "test",
+      "fechaVencimiento": "2026-04-21",
+      "actualizado": "2026-04-22T02:53:59.065Z"
+    },
+    {
+      "id": "423e1a83-8c4f-484c-ad48-cfe771a00d52",
+      "companyId": "company-1",
+      "nombre": "test2",
+      "categoria": "Herramientas",
+      "cantidad": 1,
+      "minimo": 3,
+      "estado": "En Servicio",
+      "ubicacion": "bodega",
+      "notas": "hola",
+      "fechaVencimiento": "2026-04-23",
+      "actualizado": "2026-04-23T20:50:59.937Z"
     }
   ],
   "guardBook": [

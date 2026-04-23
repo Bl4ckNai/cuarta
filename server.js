@@ -19,6 +19,7 @@ if (!MEDICAL_SECRET) {
   process.exit(1);
 }
 const MEDICAL_KEY = crypto.scryptSync(MEDICAL_SECRET, "medical-records-salt", 32);
+const TOKEN_HASH_SECRET = String(process.env.TOKEN_HASH_SECRET || MEDICAL_SECRET).trim();
 const BCRYPT_SALT_ROUNDS = Number(process.env.BCRYPT_SALT_ROUNDS || 10);
 const LOGIN_ATTEMPT_WINDOW_MS = Number(process.env.LOGIN_ATTEMPT_WINDOW_MS || 10 * 60 * 1000);
 const LOGIN_MAX_ATTEMPTS = Number(process.env.LOGIN_MAX_ATTEMPTS || 5);
@@ -68,41 +69,55 @@ app.use((req, res, next) => {
 });
 app.use(express.static(__dirname, { index: false, dotfiles: "ignore" }));
 
+app.get("/api/public/companies", (_req, res) => {
+  const db = readDb();
+  const companies = getPublicCompanies(db);
+  res.json({ companies });
+});
+
 app.post("/api/login", (req, res) => {
   const username = String(req.body?.username || "").trim().toLowerCase();
   const password = String(req.body?.password || "");
+  const companyId = String(req.body?.companyId || "").trim();
   const clientIp = getClientIp(req);
-  if (!username || !password) {
-    return res.status(400).json({ error: "Usuario y clave son obligatorios." });
+  if (!username || !password || !companyId) {
+    return res.status(400).json({ error: "Usuario, clave y compañía son obligatorios." });
   }
 
-  if (isLoginTemporarilyBlocked(username, clientIp)) {
+  if (isLoginTemporarilyBlocked(username, companyId, clientIp)) {
     return res.status(429).json({ error: "Demasiados intentos de inicio de sesión. Intenta nuevamente en unos minutos." });
   }
 
   const db = readDb();
-  const user = db.users.find((candidate) => String(candidate.username || "").toLowerCase() === username);
+  const user = db.users.find(
+    (candidate) =>
+      String(candidate.username || "").toLowerCase() === username &&
+      String(candidate.companyId || "") === companyId
+  );
   if (!user || !verifyPassword(password, user.password)) {
-    registerFailedLoginAttempt(username, clientIp);
+    registerFailedLoginAttempt(username, companyId, clientIp);
     return res.status(401).json({ error: "Credenciales inválidas." });
   }
 
   if (user.blocked) {
-    registerFailedLoginAttempt(username, clientIp);
+    registerFailedLoginAttempt(username, companyId, clientIp);
     return res.status(403).json({ error: "Usuario bloqueado. Contacta a un administrador." });
   }
 
-  clearLoginAttempts(username, clientIp);
+  clearLoginAttempts(username, companyId, clientIp);
 
   if (shouldUpgradePasswordHash(user.password)) {
     user.password = hashPassword(password);
   }
 
+  const company = getPublicCompanies(db).find((candidate) => candidate.id === user.companyId);
+
   user.lastLoginAt = new Date().toISOString();
   writeDb(db);
 
-  const token = crypto.randomUUID();
-  sessions.set(token, {
+  const token = `${crypto.randomUUID()}-${crypto.randomBytes(16).toString("hex")}`;
+  const sessionKey = hashSessionToken(token);
+  sessions.set(sessionKey, {
     userId: user.id,
     username: user.username,
     role: user.role,
@@ -116,6 +131,8 @@ app.post("/api/login", (req, res) => {
       username: user.username,
       role: user.role,
       nombre: user.nombre,
+      companyId: user.companyId,
+      companyName: company?.nombre || user.companyId,
       blocked: Boolean(user.blocked),
       email: user.email || "",
       phone: user.phone || "",
@@ -126,7 +143,7 @@ app.post("/api/login", (req, res) => {
 });
 
 app.post("/api/logout", authRequired, (req, res) => {
-  sessions.delete(req.token);
+  sessions.delete(req.sessionKey);
   res.json({ ok: true });
 });
 
@@ -202,6 +219,10 @@ app.post("/api/guard-book", authRequired, (req, res) => {
     fechaTurno: payload.fechaTurno,
     turno: payload.turno,
     tipo: payload.tipo,
+    horaInicio: payload.horaInicio,
+    horaFin: payload.horaFin,
+    notificar: payload.notificar,
+    notificarAntesMinutos: payload.notificarAntesMinutos,
     descripcion: payload.descripcion,
     recurso: payload.recurso,
     autorId: req.user.id,
@@ -376,7 +397,7 @@ app.get("/api/volunteer-courses", authRequired, (req, res) => {
 
   if (query) {
     courses = courses.filter((course) => {
-      const haystack = `${course.voluntarioNombre || ""} ${course.curso || ""} ${course.institucion || ""} ${course.certificacion || ""}`.toLowerCase();
+      const haystack = `${course.voluntarioNombre || ""} ${course.curso || ""} ${course.institucion || ""} ${course.certificacion || ""} ${course.fechaVencimientoCertificacion || ""}`.toLowerCase();
       return haystack.includes(query);
     });
   }
@@ -411,6 +432,7 @@ app.post("/api/volunteer-courses", authRequired, (req, res) => {
     fechaInicio: payload.fechaInicio,
     fechaFin: payload.fechaFin,
     certificacion: payload.certificacion,
+    fechaVencimientoCertificacion: payload.fechaVencimientoCertificacion,
     horasCapacitacion: payload.horasCapacitacion,
     actualizadoEn: new Date().toISOString(),
     actualizadoPor: req.user.nombre
@@ -449,6 +471,7 @@ app.put("/api/volunteer-courses/:id", authRequired, (req, res) => {
     fechaInicio: payload.fechaInicio,
     fechaFin: payload.fechaFin,
     certificacion: payload.certificacion,
+    fechaVencimientoCertificacion: payload.fechaVencimientoCertificacion,
     horasCapacitacion: payload.horasCapacitacion,
     actualizadoEn: new Date().toISOString(),
     actualizadoPor: req.user.nombre
@@ -706,6 +729,7 @@ app.get("/api/uniform-inventory", authRequired, (req, res) => {
   const query = {
     tipoMovimiento: String(req.query.tipoMovimiento || "").trim(),
     estadoPrenda: String(req.query.estadoPrenda || "").trim(),
+    estadoVencimiento: String(req.query.estadoVencimiento || "").trim(),
     q: String(req.query.q || "").trim().toLowerCase()
   };
 
@@ -719,9 +743,16 @@ app.get("/api/uniform-inventory", authRequired, (req, res) => {
     uniforms = uniforms.filter((record) => record.estadoPrenda === query.estadoPrenda);
   }
 
+  if (query.estadoVencimiento) {
+    uniforms = uniforms.filter((record) => {
+      const expiry = classifyUniformExpiry(record.fechaVencimiento);
+      return expiry === query.estadoVencimiento;
+    });
+  }
+
   if (query.q) {
     uniforms = uniforms.filter((record) => {
-      const haystack = `${record.voluntarioNombre || ""} ${record.prenda || ""} ${record.talla || ""} ${record.observaciones || ""}`.toLowerCase();
+      const haystack = `${record.codigoVestimenta || ""} ${record.voluntarioNombre || ""} ${record.prenda || ""} ${record.talla || ""} ${record.fechaMantencion || ""} ${record.revisionTecnicaVencimiento || ""} ${record.observaciones || ""}`.toLowerCase();
       return haystack.includes(query.q);
     });
   }
@@ -745,6 +776,7 @@ app.post("/api/uniform-inventory", authRequired, (req, res) => {
   const record = {
     id: crypto.randomUUID(),
     companyId: req.user.companyId,
+    codigoVestimenta: payload.codigoVestimenta,
     voluntarioNombre: payload.voluntarioNombre,
     prenda: payload.prenda,
     talla: payload.talla,
@@ -753,6 +785,8 @@ app.post("/api/uniform-inventory", authRequired, (req, res) => {
     estadoPrenda: payload.estadoPrenda,
     fechaMovimiento: payload.fechaMovimiento,
     fechaVencimiento: payload.fechaVencimiento,
+    fechaMantencion: payload.fechaMantencion,
+    revisionTecnicaVencimiento: payload.revisionTecnicaVencimiento,
     observaciones: payload.observaciones,
     actualizadoEn: new Date().toISOString(),
     actualizadoPor: req.user.nombre
@@ -785,6 +819,7 @@ app.put("/api/uniform-inventory/:id", authRequired, (req, res) => {
 
   const updated = {
     ...db.uniformInventory[index],
+    codigoVestimenta: payload.codigoVestimenta,
     voluntarioNombre: payload.voluntarioNombre,
     prenda: payload.prenda,
     talla: payload.talla,
@@ -793,6 +828,8 @@ app.put("/api/uniform-inventory/:id", authRequired, (req, res) => {
     estadoPrenda: payload.estadoPrenda,
     fechaMovimiento: payload.fechaMovimiento,
     fechaVencimiento: payload.fechaVencimiento,
+    fechaMantencion: payload.fechaMantencion,
+    revisionTecnicaVencimiento: payload.revisionTecnicaVencimiento,
     observaciones: payload.observaciones,
     actualizadoEn: new Date().toISOString(),
     actualizadoPor: req.user.nombre
@@ -1039,12 +1076,68 @@ app.delete("/api/inventory/:id", authRequired, (req, res) => {
   return res.json({ ok: true });
 });
 
-app.get("/api/users", authRequired, adminRequired, (req, res) => {
+app.get("/api/companies", authRequired, requirePermission("canManageCompanies"), (_req, res) => {
   const db = readDb();
+  res.json({ companies: getPublicCompanies(db) });
+});
+
+app.post("/api/companies", authRequired, requirePermission("canManageCompanies"), (req, res) => {
+  const db = readDb();
+  const companyId = sanitizeCompanyId(req.body?.id);
+  const nombre = sanitizeTextField(req.body?.nombre, 120);
+
+  if (!companyId || !nombre) {
+    return res.status(400).json({ error: "Debes indicar id y nombre de la compañía." });
+  }
+
+  const exists = (Array.isArray(db.companies) ? db.companies : []).some(
+    (company) => String(company?.id || "") === companyId
+  );
+
+  if (exists) {
+    return res.status(409).json({ error: "Ese id de compañía ya existe." });
+  }
+
+  db.companies = Array.isArray(db.companies) ? db.companies : [];
+  db.companies.push({ id: companyId, nombre });
+  writeDb(db);
+
+  return res.status(201).json({ company: { id: companyId, nombre } });
+});
+
+app.patch("/api/companies/:id", authRequired, requirePermission("canManageCompanies"), (req, res) => {
+  const targetId = sanitizeCompanyId(req.params.id);
+  const nombre = sanitizeTextField(req.body?.nombre, 120);
+  if (!targetId || !nombre) {
+    return res.status(400).json({ error: "Datos inválidos para actualizar compañía." });
+  }
+
+  const db = readDb();
+  db.companies = Array.isArray(db.companies) ? db.companies : [];
+  const index = db.companies.findIndex((company) => String(company?.id || "") === targetId);
+
+  if (index < 0) {
+    return res.status(404).json({ error: "Compañía no encontrada." });
+  }
+
+  db.companies[index] = {
+    ...db.companies[index],
+    id: targetId,
+    nombre
+  };
+
+  writeDb(db);
+  return res.json({ company: { id: targetId, nombre } });
+});
+
+app.get("/api/users", authRequired, requirePermission("canViewUsers"), (req, res) => {
+  const db = readDb();
+  const companiesById = new Map(getPublicCompanies(db).map((company) => [company.id, company.nombre]));
   const users = db.users
-    .filter((user) => user.companyId === req.user.companyId)
     .map((user) => ({
       id: user.id,
+      companyId: user.companyId,
+      companyName: companiesById.get(String(user.companyId || "")) || String(user.companyId || ""),
       nombre: user.nombre,
       username: user.username,
       email: user.email || "",
@@ -1059,11 +1152,12 @@ app.get("/api/users", authRequired, adminRequired, (req, res) => {
   res.json({ users });
 });
 
-app.post("/api/users", authRequired, adminRequired, (req, res) => {
+app.post("/api/users", authRequired, requirePermission("canCreateUsers"), (req, res) => {
   const nombre = String(req.body?.nombre || "").trim();
   const username = String(req.body?.username || "").trim().toLowerCase();
   const password = String(req.body?.password || "");
   const role = normalizeRoleValue(req.body?.role);
+  const requestedCompanyId = sanitizeCompanyId(req.body?.companyId);
   const email = sanitizeUserOptionalField(req.body?.email);
   const phone = sanitizeUserOptionalField(req.body?.phone);
   const modulePermissionsInput = req.body?.modulePermissions;
@@ -1078,8 +1172,16 @@ app.post("/api/users", authRequired, adminRequired, (req, res) => {
   }
 
   const db = readDb();
+  const availableCompanies = getPublicCompanies(db);
+  const targetCompanyId = requestedCompanyId || req.user.companyId;
+  const targetCompanyExists = availableCompanies.some((company) => company.id === targetCompanyId);
+
+  if (!targetCompanyExists) {
+    return res.status(400).json({ error: "La compañía indicada no existe." });
+  }
+
   const exists = db.users.some(
-    (user) => user.companyId === req.user.companyId && user.username.toLowerCase() === username.toLowerCase()
+    (user) => user.companyId === targetCompanyId && user.username.toLowerCase() === username.toLowerCase()
   );
 
   if (exists) {
@@ -1088,7 +1190,7 @@ app.post("/api/users", authRequired, adminRequired, (req, res) => {
 
   const newUser = {
     id: crypto.randomUUID(),
-    companyId: req.user.companyId,
+    companyId: targetCompanyId,
     nombre,
     username,
     password: hashPassword(password),
@@ -1107,6 +1209,7 @@ app.post("/api/users", authRequired, adminRequired, (req, res) => {
   res.status(201).json({
     user: {
       id: newUser.id,
+      companyId: newUser.companyId,
       nombre: newUser.nombre,
       username: newUser.username,
       email: newUser.email,
@@ -1120,11 +1223,9 @@ app.post("/api/users", authRequired, adminRequired, (req, res) => {
   });
 });
 
-app.patch("/api/users/:id", authRequired, adminRequired, (req, res) => {
+app.patch("/api/users/:id", authRequired, requirePermission("canEditUsers"), (req, res) => {
   const db = readDb();
-  const index = db.users.findIndex(
-    (user) => user.id === req.params.id && user.companyId === req.user.companyId
-  );
+  const index = db.users.findIndex((user) => user.id === req.params.id);
 
   if (index < 0) {
     return res.status(404).json({ error: "Usuario no encontrado." });
@@ -1136,10 +1237,16 @@ app.patch("/api/users/:id", authRequired, adminRequired, (req, res) => {
   }
 
   if (typeof req.body?.blocked === "boolean") {
+    if (!hasUserPermission(req.user, "canBlockUsers")) {
+      return res.status(403).json({ error: "No tienes permiso para bloquear o desbloquear usuarios." });
+    }
     user.blocked = req.body.blocked;
   }
 
   if (req.body?.password !== undefined) {
+    if (!hasUserPermission(req.user, "canResetUserPasswords")) {
+      return res.status(403).json({ error: "No tienes permiso para cambiar claves de otros usuarios." });
+    }
     const password = String(req.body.password || "");
     if (password.length < 6) {
       return res.status(400).json({ error: "La clave debe tener al menos 6 caracteres." });
@@ -1148,12 +1255,39 @@ app.patch("/api/users/:id", authRequired, adminRequired, (req, res) => {
   }
 
   if (req.body?.role !== undefined) {
+    if (!hasUserPermission(req.user, "canEditUserPermissions")) {
+      return res.status(403).json({ error: "No tienes permiso para cambiar roles de usuario." });
+    }
     const allowedRoles = ["admin", "voluntario"];
     const role = normalizeRoleValue(String(req.body.role || "").trim());
     if (!allowedRoles.includes(role)) {
       return res.status(400).json({ error: "Rol inválido." });
     }
     user.role = role;
+  }
+
+  if (req.body?.companyId !== undefined) {
+    if (!hasUserPermission(req.user, "canEditUserPermissions")) {
+      return res.status(403).json({ error: "No tienes permiso para cambiar la compañía del usuario." });
+    }
+    const newCompanyId = sanitizeCompanyId(req.body.companyId);
+    const exists = getPublicCompanies(db).some((company) => company.id === newCompanyId);
+    if (!newCompanyId || !exists) {
+      return res.status(400).json({ error: "Compañía inválida." });
+    }
+
+    const duplicateInTargetCompany = db.users.some(
+      (candidate) =>
+        candidate.id !== user.id &&
+        String(candidate.companyId || "") === newCompanyId &&
+        String(candidate.username || "").toLowerCase() === String(user.username || "").toLowerCase()
+    );
+
+    if (duplicateInTargetCompany) {
+      return res.status(409).json({ error: "Ya existe un usuario con ese nombre en la compañía destino." });
+    }
+
+    user.companyId = newCompanyId;
   }
 
   if (req.body?.nombre !== undefined) {
@@ -1173,6 +1307,9 @@ app.patch("/api/users/:id", authRequired, adminRequired, (req, res) => {
   }
 
   if (req.body?.modulePermissions !== undefined) {
+    if (!hasUserPermission(req.user, "canEditUserPermissions")) {
+      return res.status(403).json({ error: "No tienes permiso para editar permisos por módulo." });
+    }
     user.modulePermissions = normalizeModulePermissions(req.body.modulePermissions);
   }
 
@@ -1182,6 +1319,7 @@ app.patch("/api/users/:id", authRequired, adminRequired, (req, res) => {
   res.json({
     user: {
       id: user.id,
+      companyId: user.companyId,
       nombre: user.nombre,
       username: user.username,
       email: user.email || "",
@@ -1256,26 +1394,31 @@ app.listen(PORT, () => {
 function authRequired(req, res, next) {
   const auth = req.headers.authorization || "";
   const token = auth.startsWith("Bearer ") ? auth.slice("Bearer ".length) : "";
+  const sessionKey = hashSessionToken(token);
 
-  if (!token || !sessions.has(token)) {
+  if (!token || !sessions.has(sessionKey)) {
     return res.status(401).json({ error: "No autorizado." });
   }
 
-  const session = sessions.get(token);
+  const session = sessions.get(sessionKey);
   const db = readDb();
   const user = db.users.find((candidate) => candidate.id === session.userId);
   if (!user) {
-    sessions.delete(token);
+    sessions.delete(sessionKey);
     return res.status(401).json({ error: "Sesión inválida." });
   }
 
+  const company = getPublicCompanies(db).find((candidate) => candidate.id === user.companyId);
+
   req.token = token;
+  req.sessionKey = sessionKey;
   req.user = {
     id: user.id,
     username: user.username,
     role: user.role,
     nombre: user.nombre,
     companyId: user.companyId,
+    companyName: company?.nombre || user.companyId,
     blocked: Boolean(user.blocked),
     email: user.email || "",
     phone: user.phone || "",
@@ -1285,18 +1428,20 @@ function authRequired(req, res, next) {
   };
 
   if (req.user.blocked) {
-    sessions.delete(token);
+    sessions.delete(sessionKey);
     return res.status(403).json({ error: "Usuario bloqueado." });
   }
 
   next();
 }
 
-function adminRequired(req, res, next) {
-  if (!hasUserPermission(req.user, "canManageUsers")) {
-    return res.status(403).json({ error: "Solo administradores." });
-  }
-  next();
+function requirePermission(permissionKey) {
+  return (req, res, next) => {
+    if (!hasUserPermission(req.user, permissionKey)) {
+      return res.status(403).json({ error: "No tienes permiso para esta acción." });
+    }
+    return next();
+  };
 }
 
 function getClientIp(req) {
@@ -1304,12 +1449,12 @@ function getClientIp(req) {
   return forwarded || req.ip || "unknown";
 }
 
-function getLoginAttemptKey(username, ip) {
-  return `${String(username || "").toLowerCase()}|${String(ip || "unknown")}`;
+function getLoginAttemptKey(username, companyId, ip) {
+  return `${String(username || "").toLowerCase()}|${String(companyId || "").trim()}|${String(ip || "unknown")}`;
 }
 
-function isLoginTemporarilyBlocked(username, ip) {
-  const key = getLoginAttemptKey(username, ip);
+function isLoginTemporarilyBlocked(username, companyId, ip) {
+  const key = getLoginAttemptKey(username, companyId, ip);
   const attempt = loginAttempts.get(key);
   if (!attempt) {
     return false;
@@ -1328,8 +1473,8 @@ function isLoginTemporarilyBlocked(username, ip) {
   return false;
 }
 
-function registerFailedLoginAttempt(username, ip) {
-  const key = getLoginAttemptKey(username, ip);
+function registerFailedLoginAttempt(username, companyId, ip) {
+  const key = getLoginAttemptKey(username, companyId, ip);
   const now = Date.now();
   const existing = loginAttempts.get(key);
 
@@ -1351,8 +1496,8 @@ function registerFailedLoginAttempt(username, ip) {
   });
 }
 
-function clearLoginAttempts(username, ip) {
-  const key = getLoginAttemptKey(username, ip);
+function clearLoginAttempts(username, companyId, ip) {
+  const key = getLoginAttemptKey(username, companyId, ip);
   loginAttempts.delete(key);
 }
 
@@ -1423,6 +1568,20 @@ function writeDb(db) {
 function ensureDb() {
   if (!fs.existsSync(DB_PATH)) {
     const initial = {
+      companies: [
+        {
+          id: "company-1",
+          nombre: "Cuarta Compañía"
+        },
+        {
+          id: "company-3",
+          nombre: "Tercera Compañía"
+        },
+        {
+          id: "company-4",
+          nombre: "Primera Compañía"
+        }
+      ],
       users: [
         {
           id: "u-admin-1",
@@ -1541,6 +1700,14 @@ function shouldUpgradePasswordHash(storedPassword) {
   return !String(storedPassword || "").startsWith("$2");
 }
 
+function hashSessionToken(token) {
+  const rawToken = String(token || "");
+  if (!rawToken) {
+    return "";
+  }
+  return crypto.createHmac("sha256", TOKEN_HASH_SECRET).update(rawToken).digest("hex");
+}
+
 function getPermissions(role, modulePermissions = {}) {
   const isAdmin = role === "admin";
   const base = {
@@ -1552,6 +1719,13 @@ function getPermissions(role, modulePermissions = {}) {
     canWriteVehicles: canWriteVehicles(role),
     canWriteUniforms: canWriteUniforms(role),
     canManageUsers: isAdmin,
+    canViewUsers: isAdmin,
+    canCreateUsers: isAdmin,
+    canEditUsers: isAdmin,
+    canEditUserPermissions: isAdmin,
+    canResetUserPasswords: isAdmin,
+    canBlockUsers: isAdmin,
+    canManageCompanies: isAdmin,
     canGenerateReports: true
   };
 
@@ -1559,11 +1733,23 @@ function getPermissions(role, modulePermissions = {}) {
     return base;
   }
 
-  return {
+  const merged = {
     ...base,
-    ...normalizeModulePermissions(modulePermissions),
-    canManageUsers: false
+    ...normalizeModulePermissions(modulePermissions)
   };
+
+  merged.canManageUsers = Boolean(
+    merged.canManageUsers ||
+      merged.canViewUsers ||
+      merged.canCreateUsers ||
+      merged.canEditUsers ||
+      merged.canEditUserPermissions ||
+      merged.canResetUserPasswords ||
+      merged.canBlockUsers ||
+      merged.canManageCompanies
+  );
+
+  return merged;
 }
 
 function hasUserPermission(user, permissionKey) {
@@ -1572,6 +1758,7 @@ function hasUserPermission(user, permissionKey) {
 }
 
 function normalizeDb(db) {
+  const safeCompanies = Array.isArray(db.companies) ? db.companies : [];
   const safeUsers = Array.isArray(db.users) ? db.users : [];
   const safeInventory = Array.isArray(db.inventory) ? db.inventory : [];
   const safeGuardBook = Array.isArray(db.guardBook) ? db.guardBook : [];
@@ -1582,9 +1769,46 @@ function normalizeDb(db) {
   const safeVehicles = Array.isArray(db.vehicles) ? db.vehicles : [];
   const safeUniformInventory = Array.isArray(db.uniformInventory) ? db.uniformInventory : [];
 
+  const inferredCompanyIds = new Set();
+  safeUsers.forEach((user) => {
+    const id = String(user?.companyId || "").trim();
+    if (id) {
+      inferredCompanyIds.add(id);
+    }
+  });
+
+  const normalizedCompanies = safeCompanies
+    .map((company) => ({
+      id: String(company?.id || "").trim(),
+      nombre: sanitizeTextField(company?.nombre, 120)
+    }))
+    .filter((company) => company.id)
+    .map((company) => ({
+      ...company,
+      nombre: company.nombre || company.id
+    }));
+
+  inferredCompanyIds.forEach((companyId) => {
+    if (!normalizedCompanies.some((company) => company.id === companyId)) {
+      normalizedCompanies.push({ id: companyId, nombre: companyId });
+    }
+  });
+
+  if (normalizedCompanies.length === 0) {
+    normalizedCompanies.push(
+      { id: "company-1", nombre: "Cuarta Compañía" },
+      { id: "company-3", nombre: "Tercera Compañía" },
+      { id: "company-4", nombre: "Primera Compañía" }
+    );
+  }
+
+  const fallbackCompanyId = normalizedCompanies[0].id;
+
   return {
+    companies: normalizedCompanies,
     users: safeUsers.map((user) => ({
       ...user,
+      companyId: String(user.companyId || fallbackCompanyId),
       username: String(user.username || "").trim().toLowerCase(),
       blocked: Boolean(user.blocked),
       role: normalizeRoleValue(user.role),
@@ -1605,6 +1829,21 @@ function normalizeDb(db) {
   };
 }
 
+function getPublicCompanies(db) {
+  const companies = Array.isArray(db?.companies) ? db.companies : [];
+  return companies
+    .map((company) => ({
+      id: String(company?.id || "").trim(),
+      nombre: sanitizeTextField(company?.nombre, 120)
+    }))
+    .filter((company) => company.id)
+    .map((company) => ({
+      ...company,
+      nombre: company.nombre || company.id
+    }))
+    .sort((a, b) => a.nombre.localeCompare(b.nombre, "es", { sensitivity: "base" }));
+}
+
 function normalizeRoleValue(role) {
   const normalized = String(role || "").trim().toLowerCase();
   if (normalized === "admin") {
@@ -1618,6 +1857,16 @@ function sanitizeUserOptionalField(value) {
     return "";
   }
   return String(value).trim();
+}
+
+function sanitizeCompanyId(value) {
+  return String(value || "")
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9-]/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/^-|-$/g, "")
+    .slice(0, 50);
 }
 
 function sanitizeTextField(value, maxLength = 300) {
@@ -1639,7 +1888,14 @@ function normalizeModulePermissions(value) {
     canWriteVehicles: Boolean(source.canWriteVehicles),
     canWriteUniforms: Boolean(source.canWriteUniforms),
     canGenerateReports: Boolean(source.canGenerateReports),
-    canManageUsers: Boolean(source.canManageUsers)
+    canManageUsers: Boolean(source.canManageUsers),
+    canViewUsers: Boolean(source.canViewUsers),
+    canCreateUsers: Boolean(source.canCreateUsers),
+    canEditUsers: Boolean(source.canEditUsers),
+    canEditUserPermissions: Boolean(source.canEditUserPermissions),
+    canResetUserPasswords: Boolean(source.canResetUserPasswords),
+    canBlockUsers: Boolean(source.canBlockUsers),
+    canManageCompanies: Boolean(source.canManageCompanies)
   };
 }
 
@@ -1647,18 +1903,29 @@ function sanitizeUniformRecord(body) {
   const allowedMovementTypes = ["Entrega", "Devolucion"];
   const allowedGarmentStates = ["En Uso", "Disponible", "En Reparacion", "Fuera de Servicio"];
 
+  const codigoVestimenta = sanitizeTextField(body.codigoVestimenta, 60).toUpperCase();
   const voluntarioNombre = sanitizeTextField(body.voluntarioNombre, 160);
   const prenda = sanitizeTextField(body.prenda, 140);
-  const talla = sanitizeTextField(body.talla, 50);
+  const talla = sanitizeTextField(body.talla, 50).toUpperCase();
   const cantidad = Number(body.cantidad);
   const tipoMovimiento = sanitizeTextField(body.tipoMovimiento, 40);
   const estadoPrenda = sanitizeTextField(body.estadoPrenda, 80);
   const fechaMovimiento = sanitizeTextField(body.fechaMovimiento, 40);
   const fechaVencimiento = sanitizeTextField(body.fechaVencimiento, 40);
+  const fechaMantencion = sanitizeTextField(body.fechaMantencion, 40);
+  const revisionTecnicaVencimiento = sanitizeTextField(body.revisionTecnicaVencimiento, 40);
   const observaciones = sanitizeTextField(body.observaciones, 900);
 
-  if (!voluntarioNombre || !prenda || !talla || !Number.isFinite(cantidad) || !tipoMovimiento || !estadoPrenda || !fechaMovimiento) {
-    return { ok: false, error: "Completa voluntario, prenda, talla, cantidad, movimiento, estado y fecha del movimiento." };
+  if (!codigoVestimenta || !voluntarioNombre || !prenda || !talla || !Number.isFinite(cantidad) || !tipoMovimiento || !estadoPrenda || !fechaMovimiento) {
+    return { ok: false, error: "Completa codigo, voluntario, prenda, talla, cantidad, movimiento, estado y fecha del movimiento." };
+  }
+
+  if (!/^[A-Z0-9-]{3,30}$/.test(codigoVestimenta)) {
+    return { ok: false, error: "El codigo de vestimenta debe usar solo letras, numeros y guion (3-30 caracteres)." };
+  }
+
+  if (!/^[A-Z0-9./-]{1,12}$/.test(talla)) {
+    return { ok: false, error: "La talla contiene un formato invalido." };
   }
 
   if (cantidad < 1) {
@@ -1681,8 +1948,25 @@ function sanitizeUniformRecord(body) {
     return { ok: false, error: "Fecha de vencimiento invalida." };
   }
 
+  if (fechaMantencion && Number.isNaN(new Date(fechaMantencion).getTime())) {
+    return { ok: false, error: "Fecha de mantencion invalida." };
+  }
+
+  if (revisionTecnicaVencimiento && Number.isNaN(new Date(revisionTecnicaVencimiento).getTime())) {
+    return { ok: false, error: "Fecha de revision tecnica invalida." };
+  }
+
+  if (tipoMovimiento === "Entrega" && !fechaVencimiento) {
+    return { ok: false, error: "Para una entrega debes registrar fecha de vencimiento." };
+  }
+
+  if (estadoPrenda === "En Reparacion" && !fechaMantencion) {
+    return { ok: false, error: "Si la prenda esta en reparacion debes registrar fecha de mantencion." };
+  }
+
   return {
     ok: true,
+    codigoVestimenta,
     voluntarioNombre,
     prenda,
     talla,
@@ -1691,6 +1975,8 @@ function sanitizeUniformRecord(body) {
     estadoPrenda,
     fechaMovimiento,
     fechaVencimiento,
+    fechaMantencion,
+    revisionTecnicaVencimiento,
     observaciones
   };
 }
@@ -1976,6 +2262,7 @@ function sanitizeVolunteerCourse(body) {
   const fechaInicio = sanitizeTextField(body.fechaInicio, 40);
   const fechaFin = sanitizeTextField(body.fechaFin, 40);
   const certificacion = sanitizeTextField(body.certificacion, 180);
+  const fechaVencimientoCertificacion = sanitizeTextField(body.fechaVencimientoCertificacion, 40);
   const horasCapacitacion = Number(body.horasCapacitacion);
 
   if (!voluntarioNombre || !curso || !institucion || !fechaInicio || !certificacion) {
@@ -1994,6 +2281,18 @@ function sanitizeVolunteerCourse(body) {
     return { ok: false, error: "La fecha de fin no puede ser anterior a la fecha de inicio." };
   }
 
+  if (fechaVencimientoCertificacion && Number.isNaN(new Date(fechaVencimientoCertificacion).getTime())) {
+    return { ok: false, error: "Fecha de vencimiento de certificación inválida." };
+  }
+
+  if (fechaVencimientoCertificacion && fechaVencimientoCertificacion < fechaInicio) {
+    return { ok: false, error: "El vencimiento de certificación no puede ser anterior a la fecha de inicio." };
+  }
+
+  if (fechaVencimientoCertificacion && fechaFin && fechaVencimientoCertificacion < fechaFin) {
+    return { ok: false, error: "El vencimiento de certificación no puede ser anterior a la fecha de fin." };
+  }
+
   if (!Number.isFinite(horasCapacitacion) || horasCapacitacion < 1) {
     return { ok: false, error: "Las horas de capacitacion deben ser un numero mayor o igual a 1." };
   }
@@ -2006,6 +2305,7 @@ function sanitizeVolunteerCourse(body) {
     fechaInicio,
     fechaFin,
     certificacion,
+    fechaVencimientoCertificacion,
     horasCapacitacion
   };
 }
@@ -2087,10 +2387,15 @@ function decryptMedicalValue(payload) {
 function sanitizeGuardEntry(body) {
   const allowedTurnos = ["Manana", "Tarde", "Noche"];
   const allowedTipos = ["Entrada", "Salida", "Evento", "Observacion"];
+  const allowedNotifyMinutes = [15, 30, 60, 120];
 
   const fechaTurno = sanitizeTextField(body.fechaTurno, 40);
   const turno = sanitizeTextField(body.turno, 20);
   const tipo = sanitizeTextField(body.tipo, 40);
+  const horaInicio = sanitizeTextField(body.horaInicio, 10);
+  const horaFin = sanitizeTextField(body.horaFin, 10);
+  const notificar = Boolean(body.notificar);
+  const notificarAntesMinutos = Number(body.notificarAntesMinutos || 60);
   const descripcion = sanitizeTextField(body.descripcion, 1200);
   const recurso = sanitizeTextField(body.recurso, 200);
 
@@ -2111,11 +2416,35 @@ function sanitizeGuardEntry(body) {
     return { ok: false, error: "Fecha del turno inválida." };
   }
 
+  if (horaInicio && !/^([01]\d|2[0-3]):([0-5]\d)$/.test(horaInicio)) {
+    return { ok: false, error: "Hora de inicio inválida. Usa formato HH:MM." };
+  }
+
+  if (horaFin && !/^([01]\d|2[0-3]):([0-5]\d)$/.test(horaFin)) {
+    return { ok: false, error: "Hora de término inválida. Usa formato HH:MM." };
+  }
+
+  if (horaInicio && horaFin && horaInicio >= horaFin) {
+    return { ok: false, error: "La hora de término debe ser mayor a la hora de inicio." };
+  }
+
+  if (!allowedNotifyMinutes.includes(notificarAntesMinutos)) {
+    return { ok: false, error: "El tiempo de aviso es inválido." };
+  }
+
+  if ((tipo === "Evento" || tipo === "Entrada") && !horaInicio) {
+    return { ok: false, error: "Para eventos o entradas debes indicar hora de inicio." };
+  }
+
   return {
     ok: true,
     fechaTurno,
     turno,
     tipo,
+    horaInicio,
+    horaFin,
+    notificar,
+    notificarAntesMinutos,
     descripcion,
     recurso
   };
@@ -2413,11 +2742,12 @@ function streamUniformsPdf(res, uniforms, user) {
 
   uniforms.forEach((record, idx) => {
     renderPdfCard(doc, `${idx + 1}. ${record.voluntarioNombre}`, [
-      `Prenda: ${record.prenda} | Talla: ${record.talla}`,
+      `Codigo: ${record.codigoVestimenta || "-"} | Prenda: ${record.prenda} | Talla: ${record.talla}`,
       `Cantidad: ${record.cantidad}`,
       `Movimiento: ${record.tipoMovimiento} | Estado: ${record.estadoPrenda}`,
       `Fecha: ${record.fechaMovimiento}`,
       `Vence: ${record.fechaVencimiento || "-"}`,
+      `Mantencion: ${record.fechaMantencion || "-"} | Rev. tecnica: ${record.revisionTecnicaVencimiento || "-"}`,
       `Observaciones: ${record.observaciones || "-"}`
     ]);
   });
@@ -2425,4 +2755,29 @@ function streamUniformsPdf(res, uniforms, user) {
   renderPdfSignatureBlock(doc, user);
   addPdfFooters(doc);
   doc.end();
+}
+
+function classifyUniformExpiry(dateText) {
+  if (!dateText) {
+    return "SinFecha";
+  }
+
+  const target = new Date(dateText);
+  if (Number.isNaN(target.getTime())) {
+    return "SinFecha";
+  }
+
+  const now = new Date();
+  const msPerDay = 1000 * 60 * 60 * 24;
+  const diffDays = Math.ceil((target - now) / msPerDay);
+
+  if (diffDays < 0) {
+    return "Vencido";
+  }
+
+  if (diffDays <= 30) {
+    return "PorVencer";
+  }
+
+  return "AlDia";
 }

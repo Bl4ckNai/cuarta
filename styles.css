@@ -526,6 +526,102 @@ h1 {
   color: var(--text-muted);
 }
 
+.visual-dashboard-card {
+  border-top: 4px solid #3d7bff;
+}
+
+.visual-dashboard-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.visual-dashboard-time {
+  margin: 0;
+  font-size: 0.78rem;
+  color: var(--text-muted);
+}
+
+.visual-metrics-grid {
+  margin-top: 0.45rem;
+  display: grid;
+  gap: 0.45rem;
+}
+
+.visual-metric-item {
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 0.5rem 0.6rem;
+  background: rgba(20, 27, 36, 0.78);
+}
+
+.visual-metric-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.35rem;
+}
+
+.visual-metric-top span {
+  font-size: 0.82rem;
+  color: var(--text-muted);
+}
+
+.visual-metric-top strong {
+  font-size: 0.86rem;
+}
+
+.visual-track {
+  position: relative;
+  height: 10px;
+  border-radius: 999px;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.visual-fill {
+  display: block;
+  width: 0;
+  height: 100%;
+  border-radius: inherit;
+  transition: width 260ms ease;
+}
+
+.visual-track-ok .visual-fill {
+  background: linear-gradient(90deg, #3ecf8e 0%, #51a6ff 100%);
+}
+
+.visual-track-warn .visual-fill {
+  background: linear-gradient(90deg, #f2b232 0%, #ff7f50 100%);
+}
+
+.visual-track-danger .visual-fill {
+  background: linear-gradient(90deg, #ff6b6b 0%, #c0392b 100%);
+}
+
+.visual-alert-summary {
+  margin-top: 0.5rem;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.35rem;
+}
+
+.visual-alert-summary p {
+  margin: 0;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 0.4rem 0.5rem;
+  font-size: 0.82rem;
+  background: rgba(10, 16, 24, 0.72);
+}
+
+.visual-alert-summary span {
+  font-weight: 700;
+  font-size: 0.95rem;
+}
+
 .hero-stats {
   margin-top: 0.45rem;
   display: grid;
