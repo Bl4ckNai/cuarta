@@ -5,14 +5,19 @@ const crypto = require("crypto");
 const bcrypt = require("bcryptjs");
 const multer = require("multer");
 const PDFDocument = require("pdfkit");
-require("dotenv").config();
+
+const SOURCE_ROOT = __dirname;
+const RUNTIME_ROOT = process.pkg ? path.dirname(process.execPath) : __dirname;
+const ENV_PATH = path.join(RUNTIME_ROOT, ".env");
+require("dotenv").config({ path: ENV_PATH });
+ensureRuntimeSecret();
 
 const app = express();
 const PORT = process.env.PORT || 3000;
-const DB_PATH = path.join(__dirname, "data", "db.json");
+const DB_PATH = path.join(RUNTIME_ROOT, "data", "db.json");
 const DB_BACKUP_PATH = `${DB_PATH}.bak`;
 const DB_TMP_PATH = `${DB_PATH}.tmp`;
-const DAY_ORDERS_UPLOAD_DIR = path.join(__dirname, "uploads", "day-orders");
+const DAY_ORDERS_UPLOAD_DIR = path.join(RUNTIME_ROOT, "uploads", "day-orders");
 const MEDICAL_SECRET = String(process.env.MEDICAL_SECRET || "").trim();
 if (!MEDICAL_SECRET) {
   console.error("Falta la variable de entorno MEDICAL_SECRET. Define un secreto robusto antes de iniciar el servidor.");
@@ -67,7 +72,8 @@ app.use((req, res, next) => {
   }
   return next();
 });
-app.use(express.static(__dirname, { index: false, dotfiles: "ignore" }));
+app.use("/uploads/day-orders", express.static(DAY_ORDERS_UPLOAD_DIR, { index: false, dotfiles: "ignore" }));
+app.use(express.static(SOURCE_ROOT, { index: false, dotfiles: "ignore" }));
 
 app.get("/api/public/companies", (_req, res) => {
   const db = readDb();
@@ -907,7 +913,7 @@ app.post("/api/day-orders/pdfs/upload", authRequired, (req, res) => {
 
     const db = readDb();
     const titulo = String(req.body?.titulo || "").trim() || String(path.parse(req.file.originalname).name || "Orden del dia").trim();
-    const relativePath = path.relative(__dirname, req.file.path).replaceAll("\\", "/");
+    const relativePath = path.relative(RUNTIME_ROOT, req.file.path).replaceAll("\\", "/");
     const fileUrl = `/${relativePath}`;
 
     const pdfRecord = {
@@ -1384,7 +1390,7 @@ app.use((error, _req, res, next) => {
 });
 
 app.get(/.*/, (_req, res) => {
-  res.sendFile(path.join(__dirname, "index.html"));
+  res.sendFile(path.join(SOURCE_ROOT, "index.html"));
 });
 
 app.listen(PORT, () => {
@@ -1501,6 +1507,28 @@ function clearLoginAttempts(username, companyId, ip) {
   loginAttempts.delete(key);
 }
 
+function ensureRuntimeSecret() {
+  const existing = String(process.env.MEDICAL_SECRET || "").trim();
+  if (existing) {
+    return;
+  }
+
+  fs.mkdirSync(RUNTIME_ROOT, { recursive: true });
+  const generatedSecret = crypto.randomBytes(32).toString("hex");
+  let lines = [];
+
+  if (fs.existsSync(ENV_PATH)) {
+    const current = fs.readFileSync(ENV_PATH, "utf-8");
+    lines = current.split(/\r?\n/).filter((line) => line.trim().length > 0);
+    lines = lines.filter((line) => !line.startsWith("MEDICAL_SECRET="));
+  }
+
+  lines.push(`MEDICAL_SECRET=${generatedSecret}`);
+  fs.writeFileSync(ENV_PATH, `${lines.join("\n")}\n`, "utf-8");
+  process.env.MEDICAL_SECRET = generatedSecret;
+  console.warn("No se encontró MEDICAL_SECRET en .env. Se creó uno automáticamente en", ENV_PATH);
+}
+
 function isBlockedPublicPath(requestPath) {
   const normalizedPath = String(requestPath || "/").replaceAll("\\", "/");
 
@@ -1566,6 +1594,7 @@ function writeDb(db) {
 }
 
 function ensureDb() {
+  fs.mkdirSync(path.dirname(DB_PATH), { recursive: true });
   if (!fs.existsSync(DB_PATH)) {
     const initial = {
       companies: [

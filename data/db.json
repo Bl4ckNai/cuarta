@@ -2,11 +2,11 @@
   "companies": [
     {
       "id": "company-1",
-      "nombre": "company-1"
+      "nombre": "primera"
     },
     {
       "id": "company-3",
-      "nombre": "company-3"
+      "nombre": "tercera"
     },
     {
       "id": "company-4",
@@ -35,7 +35,14 @@
         "canWriteVehicles": false,
         "canWriteUniforms": false,
         "canGenerateReports": false,
-        "canManageUsers": false
+        "canManageUsers": false,
+        "canViewUsers": false,
+        "canCreateUsers": false,
+        "canEditUsers": false,
+        "canEditUserPermissions": false,
+        "canResetUserPasswords": false,
+        "canBlockUsers": false,
+        "canManageCompanies": false
       }
     },
     {
@@ -59,7 +66,14 @@
         "canWriteVehicles": false,
         "canWriteUniforms": false,
         "canGenerateReports": false,
-        "canManageUsers": false
+        "canManageUsers": false,
+        "canViewUsers": false,
+        "canCreateUsers": false,
+        "canEditUsers": false,
+        "canEditUserPermissions": false,
+        "canResetUserPasswords": false,
+        "canBlockUsers": false,
+        "canManageCompanies": false
       }
     },
     {
@@ -83,7 +97,14 @@
         "canWriteVehicles": false,
         "canWriteUniforms": true,
         "canGenerateReports": true,
-        "canManageUsers": false
+        "canManageUsers": false,
+        "canViewUsers": false,
+        "canCreateUsers": false,
+        "canEditUsers": false,
+        "canEditUserPermissions": false,
+        "canResetUserPasswords": false,
+        "canBlockUsers": false,
+        "canManageCompanies": false
       }
     },
     {
@@ -97,7 +118,7 @@
       "email": "tlauriem@gmail.com",
       "phone": "934036439",
       "createdAt": "2026-04-23T20:53:06.879Z",
-      "lastLoginAt": "2026-04-23T20:53:18.665Z",
+      "lastLoginAt": "2026-04-27T23:28:47.633Z",
       "modulePermissions": {
         "canWriteInventory": true,
         "canWriteGuardBook": true,
@@ -107,7 +128,14 @@
         "canWriteVehicles": true,
         "canWriteUniforms": true,
         "canGenerateReports": true,
-        "canManageUsers": false
+        "canManageUsers": false,
+        "canViewUsers": false,
+        "canCreateUsers": false,
+        "canEditUsers": false,
+        "canEditUserPermissions": false,
+        "canResetUserPasswords": false,
+        "canBlockUsers": false,
+        "canManageCompanies": false
       }
     }
   ],

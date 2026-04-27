@@ -2,10 +2,12 @@
   "name": "inv_cuarta",
   "version": "1.0.0",
   "main": "server.js",
+  "bin": "server.js",
   "scripts": {
     "start": "node server.js",
     "dev": "node server.js",
-    "test": "echo \"Sin pruebas configuradas\""
+    "test": "echo \"Sin pruebas configuradas\"",
+    "build:exe": "node scripts/build-exe.js"
   },
   "keywords": [],
   "author": "",
@@ -17,5 +19,21 @@
     "express": "^5.2.1",
     "multer": "^2.1.1",
     "pdfkit": "^0.18.0"
+  },
+  "devDependencies": {
+    "pkg": "^5.8.1"
+  },
+  "pkg": {
+    "scripts": [
+      "server.js"
+    ],
+    "assets": [
+      "index.html",
+      "users.html",
+      "app.js",
+      "users.js",
+      "styles.css",
+      "assets/**/*"
+    ]
   }
 }
