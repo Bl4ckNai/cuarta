@@ -32,7 +32,7 @@ if errorlevel 1 (
 )
 
 echo.
-echo Listo. Ejecutable generado en: dist\inv_cuarta.exe
+echo Listo. Ejecutable generado en: dist\Firestock.exe
 echo Copia la carpeta dist al otro PC y ejecuta el .exe desde ahi.
 pause
 exit /b 0

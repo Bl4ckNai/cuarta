@@ -13,7 +13,7 @@ require("dotenv").config({ path: ENV_PATH });
 ensureRuntimeSecret();
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 8080;
 const DB_PATH = path.join(RUNTIME_ROOT, "data", "db.json");
 const DB_BACKUP_PATH = `${DB_PATH}.bak`;
 const DB_TMP_PATH = `${DB_PATH}.tmp`;

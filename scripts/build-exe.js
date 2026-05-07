@@ -4,7 +4,7 @@ const path = require("path");
 
 const projectRoot = path.resolve(__dirname, "..");
 const cachePath = path.join(projectRoot, ".pkg-cache");
-const outputPath = path.join(projectRoot, "dist", "inv_cuarta.exe");
+const outputPath = path.join(projectRoot, "dist", "Firestock.exe");
 
 fs.mkdirSync(cachePath, { recursive: true });
 fs.mkdirSync(path.dirname(outputPath), { recursive: true });

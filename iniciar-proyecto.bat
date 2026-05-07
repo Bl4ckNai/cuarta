@@ -24,7 +24,7 @@ if exist ".env" (
 )
 
 echo Iniciando proyecto...
-start "inv_cuarta" cmd /k "npm start"
+start "Firestock" cmd /k "npm start"
 if errorlevel 1 (
   echo.
   echo No se pudo abrir la ventana del servidor.
